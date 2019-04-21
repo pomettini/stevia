@@ -35,12 +35,12 @@ typedef struct gscript_context
 char *alloc_string(int size, char *string);
 char **gscript_text_init();
 gscript_context *gscript_context_init(char **script);
-int gscript_parse_question(gscript_context *ctx);
+void gscript_parse_question(gscript_context *ctx);
 void gscript_parse_print(gscript_context *ctx);
 void gscript_parse_jump(gscript_context *ctx);
 gscript_type gscript_parse_line(char *line);
-int gscript_process_line(gscript_context *ctx);
-int gscript_print_line(gscript_context *ctx);
+void gscript_process_line(gscript_context *ctx);
+void gscript_print_line(gscript_context *ctx);
 void debug_gscript_print_status(gscript_context *ctx);
 
 char *alloc_string(int size, char *string)
@@ -82,7 +82,7 @@ gscript_context *gscript_context_init(char **script)
     return ctx;
 }
 
-int gscript_parse_question(gscript_context *ctx)
+void gscript_parse_question(gscript_context *ctx)
 {
     char *token;
     char sample[] = "Q;Yes, I like it!;4;No, I do not like it;6";
@@ -120,8 +120,6 @@ int gscript_parse_question(gscript_context *ctx)
     // {
     //     printf("%s jumps to %d\n", ctx->line_questions_text[i], ctx->line_questions_jump[i]);
     // }
-
-    return 1;
 }
 
 void gscript_parse_print(gscript_context *ctx)
@@ -164,31 +162,27 @@ gscript_type gscript_parse_line(char *line)
     return ERROR;
 }
 
-int gscript_process_line(gscript_context *ctx)
+void gscript_process_line(gscript_context *ctx)
 {
     switch (ctx->line_type)
     {
     case TYPE_PRINT:
         gscript_parse_print(ctx);
-        return OK;
         break;
 
     case TYPE_QUESTION:
+        gscript_parse_print(ctx);
         gscript_parse_question(ctx);
-        return OK;
         break;
     }
-
-    return ERROR;
 }
 
-int gscript_print_line(gscript_context *ctx)
+void gscript_print_line(gscript_context *ctx)
 {
     switch (ctx->line_type)
     {
     case TYPE_PRINT:
         printf("- %s\n", ctx->line_text);
-        return OK;
         break;
 
     case TYPE_QUESTION:
@@ -196,11 +190,8 @@ int gscript_print_line(gscript_context *ctx)
         {
             printf("- * %s -> %d\n", ctx->line_questions_text[i], ctx->line_questions_jump[i]);
         }
-        return OK;
         break;
     }
-
-    return ERROR;
 }
 
 void debug_gscript_print_status(gscript_context *ctx)
@@ -217,18 +208,16 @@ int main()
     char **gscript_text = gscript_text_init();
     gscript_context *ctx = gscript_context_init(gscript_text);
 
-    int result = 0;
-
     while (1)
     {
         // First, parse line
         ctx->line_type = gscript_parse_line(ctx->script[ctx->line_id]);
 
         // Second, process line
-        result = gscript_process_line(ctx);
+        gscript_process_line(ctx);
 
         // Debug: print line
-        result = gscript_print_line(ctx);
+        gscript_print_line(ctx);
 
         // debug_gscript_print_status(ctx);
 
