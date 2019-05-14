@@ -1,0 +1,1 @@
+P;Hello There|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;4;No, I do not like it;6|P;Thank you!|J;END|P;Oh, I see|J;END

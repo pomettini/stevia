@@ -1,2 +1,0 @@
-clang -o test output_example.c
-./test
