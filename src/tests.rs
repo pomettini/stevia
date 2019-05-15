@@ -8,6 +8,19 @@ macro_rules! SETUP_READER {
     };
 }
 
+macro_rules! SETUP_WRITER {
+    ($i:expr, $w:ident) => {
+        let input = $i;
+        let mut reader = Reader::from_text(input);
+        reader.parse_all_lines();
+
+        let mut $w = Writer::new();
+        $w.process_lines(&reader);
+    };
+}
+
+// --- READER TESTS ---
+
 #[test]
 fn test_parse_text_line_one() {
     SETUP_READER!(reader, r#"Hello world"#);
@@ -182,15 +195,37 @@ fn test_parse_end_two() {
     assert_eq!(reader.lines[1].type_, LineType::End);
 }
 
-// #[test]
-// fn test_writer_undefined() {
-//     assert_eq!("", "A;");
-// }
+// --- WRITER TEST ---
 
-// #[test]
-// fn test_writer_print() {
-//     assert_eq!("", "P;Hello There");
-// }
+#[test]
+fn test_writer_print_one() {
+    SETUP_WRITER!("Hello world", writer);
+
+    assert_eq!(writer.output, "P;Hello world");
+}
+
+#[test]
+fn test_writer_print_two() {
+    SETUP_WRITER!(
+        r#"Hello world
+Ciao mondo"#,
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
+}
+
+#[test]
+fn test_writer_print_three() {
+    SETUP_WRITER!(
+        r#"Hello world
+Ciao mondo
+Bonjour monde"#,
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
+}
 
 // #[test]
 // fn test_writer_question_one() {
@@ -202,17 +237,19 @@ fn test_parse_end_two() {
 //     assert_eq!("", "Q;Yes, I like it!;00120;No, I do not like it;00136");
 // }
 
-// #[test]
-// fn test_writer_question_missing_jump() {
-//     assert_eq!("", "Q;Yes, I like it!");
-// }
+#[test]
+fn test_writer_end_one() {
+    SETUP_WRITER!("-> END", writer);
 
-// #[test]
-// fn test_writer_jump() {
-//     assert_eq!("", "J;00001");
-// }
+    assert_eq!(writer.output, "E;");
+}
 
-// #[test]
-// fn test_writer_end() {
-//     assert_eq!("", "E;");
-// }
+fn test_writer_end_two() {
+    SETUP_WRITER!(
+        "Hello world
+-> END",
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello world|E;");
+}

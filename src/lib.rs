@@ -76,7 +76,9 @@ impl Reader {
             match first_char {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => line.type_ = LineType::Text,
                 b'+' => line.type_ = LineType::Question,
+                // TODO: Must check that there are three =
                 b'=' => line.type_ = LineType::Bookmark,
+                // TODO: Must check between END and JUMP
                 b'-' => line.type_ = LineType::End,
                 _ => line.type_ = LineType::Undefined,
             }
@@ -85,9 +87,29 @@ impl Reader {
 }
 
 impl Writer {
-    fn new() -> Writer {
+    pub fn new() -> Writer {
         Writer {
             output: String::new(),
+        }
+    }
+
+    pub fn process_lines(&mut self, input: &Reader) {
+        let mut counter: usize = 0;
+        ß
+        for line in &input.lines {
+            match line.type_ {
+                LineType::Undefined => break,
+                LineType::Text => self.output.push_str(&format!("P;{}", line.text)),
+                LineType::End => self.output.push_str(&format!("E;")),
+                _ => break,
+            }
+
+            counter += 1;
+
+            // Add separator until it's the last line
+            if counter < input.lines.len() {
+                self.output.push_str("|");
+            }
         }
     }
 }
