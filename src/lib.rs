@@ -5,7 +5,6 @@ pub mod tests;
 #[derive(Debug, PartialEq)]
 pub enum LineType {
     Undefined,
-    Empty,
     Text,
     Question,
     Bookmark,
@@ -56,27 +55,29 @@ impl Reader {
 
         // Add lines to the list
         for line in lines {
-            let l = Line::new(String::from(line));
-            self.lines.push(l);
+            // Skips empty lines
+            if line.len() > 0 {
+                let l = Line::new(String::from(line));
+                self.lines.push(l);
+            }
         }
     }
 
     fn check_lines_type(&mut self) {
         for line in &mut self.lines {
-            // Check if line is empty, if so it exits
+            // If the line is empty exits (but it shouldn't happen)
             if line.text.len() == 0 {
-                line.type_ = LineType::Empty;
+                line.type_ = LineType::Undefined;
                 return;
             }
 
             let first_char = line.text.as_bytes().get(0).unwrap();
 
             match first_char {
-                b'a'...b'z' | b'A'...b'Z' => line.type_ = LineType::Text,
-                b'+' => line.type_ = LineType::Question,
-                b'-' => line.type_ = LineType::End,
+                b'a'...b'z' | b'A'...b'Z' | 0...9 => line.type_ = LineType::Text,
                 b'+' => line.type_ = LineType::Question,
                 b'=' => line.type_ = LineType::Bookmark,
+                b'-' => line.type_ = LineType::End,
                 _ => line.type_ = LineType::Undefined,
             }
         }
