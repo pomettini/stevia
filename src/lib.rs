@@ -16,14 +16,20 @@ pub struct Line {
     pub type_: LineType,
 }
 
+pub struct Question {
+    pub text: String,
+    pub jump_pos: usize,
+}
+
 pub struct Reader {
     pub source: String,
     pub lines: Vec<Line>,
-    pub bookmarks: HashMap<String, usize>,
 }
 
 pub struct Writer {
+    pub index: usize,
     pub output: String,
+    pub bookmarks: HashMap<String, usize>,
 }
 
 impl Line {
@@ -35,12 +41,20 @@ impl Line {
     }
 }
 
+impl Question {
+    pub fn new(text: String) -> Question {
+        Question {
+            text: String::new(),
+            jump_pos: 0,
+        }
+    }
+}
+
 impl Reader {
     pub fn from_text(source: &str) -> Reader {
         Reader {
             source: String::from(source),
             lines: Vec::new(),
-            bookmarks: HashMap::new(),
         }
     }
 
@@ -76,7 +90,7 @@ impl Reader {
             match first_char {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => line.type_ = LineType::Text,
                 b'+' => line.type_ = LineType::Question,
-                // TODO: Must check that there are three =
+                // TODO: Must check that there are three equals
                 b'=' => line.type_ = LineType::Bookmark,
                 // TODO: Must check between END and JUMP
                 b'-' => line.type_ = LineType::End,
@@ -89,25 +103,42 @@ impl Reader {
 impl Writer {
     pub fn new() -> Writer {
         Writer {
+            index: 0,
             output: String::new(),
+            bookmarks: HashMap::new(),
         }
     }
 
     pub fn process_lines(&mut self, input: &Reader) {
-        let mut counter: usize = 0;
-        ß
+        let mut current_line: usize = 0;
+
         for line in &input.lines {
             match line.type_ {
                 LineType::Undefined => break,
                 LineType::Text => self.output.push_str(&format!("P;{}", line.text)),
+                LineType::Bookmark => {
+                    // Remove equal and white spaces
+                    let chars_to_trim: &[char] = &['=', ' '];
+                    // Add the new string to the bookmarks
+                    let trimmed_string: &str = line.text.trim_matches(chars_to_trim);
+                    self.bookmarks
+                        .insert(trimmed_string.to_string(), self.index);
+                }
                 LineType::End => self.output.push_str(&format!("E;")),
                 _ => break,
             }
 
-            counter += 1;
+            // Index should add 3 at the end because
+            // The first two characters are for the prefix
+            // And the last one for the suffix
+            if line.type_ != LineType::Bookmark {
+                self.index += line.text.len() + 3;
+            }
+
+            current_line += 1;
 
             // Add separator until it's the last line
-            if counter < input.lines.len() {
+            if current_line < input.lines.len() && line.type_ != LineType::Bookmark {
                 self.output.push_str("|");
             }
         }

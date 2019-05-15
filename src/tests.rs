@@ -19,6 +19,12 @@ macro_rules! SETUP_WRITER {
     };
 }
 
+macro_rules! SETUP_BOOKMARKS {
+    ($e:expr, $j:expr, $w:ident) => {
+        $w.bookmarks.insert($e, $j);
+    };
+}
+
 // --- READER TESTS ---
 
 #[test]
@@ -228,13 +234,26 @@ Bonjour monde"#,
 }
 
 // #[test]
-// fn test_writer_question_one() {
-//     assert_eq!("", "Q;Yes, I like it!;00120");
+// fn test_writer_question_fake_jump_one() {
+//     SETUP_WRITER!("+ [Hello world] -> example", writer);
+
+//     SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+
+//     assert_eq!(writer.output, "Q;Hello world!;00001");
 // }
 
 // #[test]
-// fn test_writer_question_two() {
-//     assert_eq!("", "Q;Yes, I like it!;00120;No, I do not like it;00136");
+// fn test_writer_question_fake_jump_two() {
+//     SETUP_WRITER!(
+//         "+ [Hello world] -> example
+// + [Ciao mondo] -> sample",
+//         writer
+//     );
+
+//     SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+//     SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+
+//     assert_eq!(writer.output, "Q;Hello world!;00001;Ciao mondo;00002");
 // }
 
 #[test]
@@ -244,6 +263,7 @@ fn test_writer_end_one() {
     assert_eq!(writer.output, "E;");
 }
 
+#[test]
 fn test_writer_end_two() {
     SETUP_WRITER!(
         "Hello world
@@ -252,4 +272,52 @@ fn test_writer_end_two() {
     );
 
     assert_eq!(writer.output, "P;Hello world|E;");
+}
+
+#[test]
+fn test_writer_bookmark_position_zero_one() {
+    SETUP_WRITER!("=== hello", writer);
+
+    assert_eq!(writer.bookmarks["hello"], 0);
+}
+
+#[test]
+fn test_writer_bookmark_position_zero_two() {
+    SETUP_WRITER!(
+        "=== hello
+=== world",
+        writer
+    );
+
+    assert_eq!(writer.bookmarks["hello"], 0);
+    assert_eq!(writer.bookmarks["world"], 0);
+}
+
+#[test]
+fn test_writer_bookmark_one() {
+    SETUP_WRITER!(
+        "Hello world
+=== hello
+Ciao mondo",
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
+    assert_eq!(writer.bookmarks["hello"], 14);
+}
+
+#[test]
+fn test_writer_bookmark_two() {
+    SETUP_WRITER!(
+        "Hello world
+=== hello
+Ciao mondo
+=== world
+Bonjour monde",
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
+    assert_eq!(writer.bookmarks["hello"], 14);
+    assert_eq!(writer.bookmarks["world"], 27);
 }
