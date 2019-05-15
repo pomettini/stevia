@@ -74,12 +74,11 @@ fn test_parse_empty_line_two() {
 
 #[test]
 fn test_parse_empty_line_three() {
-    let input = r#"
+    SETUP_READER!(
+        reader, r#"
 
-"#;
-
-    let mut reader = Reader::from_text(input);
-    reader.parse_all_lines();
+"#
+    );
 
     assert_eq!(reader.lines.len(), 0);
 }
