@@ -15,6 +15,7 @@ macro_rules! SETUP_WRITER {
         reader.parse_all_lines();
 
         let mut $w = Writer::new();
+        $w.process_bookmarks(&reader);
         $w.process_lines(&reader);
     };
 }
@@ -233,28 +234,89 @@ Bonjour monde"#,
     assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
 }
 
+#[test]
+fn test_writer_question_fake_jump_one() {
+    SETUP_WRITER!("+ [Hello world] -> example", writer);
+
+    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+
+    assert_eq!(writer.output, "Q;Hello world;00000");
+}
+
+#[test]
+fn test_writer_question_fake_jump_two() {
+    SETUP_WRITER!(
+        "+ [Hello world] -> example
++ [Ciao mondo] -> sample",
+        writer
+    );
+
+    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+
+    assert_eq!(writer.output, "Q;Hello world;00000;Ciao mondo;00000");
+}
+
+#[test]
+fn test_writer_question_fake_jump_and_print() {
+    SETUP_WRITER!(
+        "+ [Hello world] -> example
++ [Ciao mondo] -> sample
+Bonjour monde",
+        writer
+    );
+
+    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+
+    assert_eq!(
+        writer.output,
+        "Q;Hello world;00000;Ciao mondo;00000|P;Bonjour monde"
+    );
+}
+
+#[test]
+fn test_writer_question_fake_jump_multiple() {
+    SETUP_WRITER!(
+        "+ [Hello world] -> example
++ [Ciao mondo] -> sample
+Bonjour monde
++ [Hello world] -> example
++ [Ciao mondo] -> sample
+",
+        writer
+    );
+
+    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+
+    assert_eq!(
+        writer.output,
+        "Q;Hello world;00000;Ciao mondo;00000|P;Bonjour monde|Q;Hello world;00000;Ciao mondo;00000"
+    );
+}
+
 // #[test]
-// fn test_writer_question_fake_jump_one() {
-//     SETUP_WRITER!("+ [Hello world] -> example", writer);
+fn test_writer_question_one() {
+    SETUP_WRITER!(
+        "+ [Hello world] -> example
++ [Ciao mondo] -> sample
+=== example
+Hello world
+=== sample
+Ciao mondo
+",
+        writer
+    );
 
-//     SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+    assert_eq!(writer.bookmarks["example"], 38);
+    assert_eq!(writer.bookmarks["sample"], 52);
 
-//     assert_eq!(writer.output, "Q;Hello world!;00001");
-// }
-
-// #[test]
-// fn test_writer_question_fake_jump_two() {
-//     SETUP_WRITER!(
-//         "+ [Hello world] -> example
-// + [Ciao mondo] -> sample",
-//         writer
-//     );
-
-//     SETUP_BOOKMARKS!(String::from("example"), 1, writer);
-//     SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
-
-//     assert_eq!(writer.output, "Q;Hello world!;00001;Ciao mondo;00002");
-// }
+    assert_eq!(
+        writer.output,
+        "Q;Hello world;00000;Ciao mondo;00000|P;Hello world|P;Ciao mondo"
+    );
+}
 
 #[test]
 fn test_writer_end_one() {
