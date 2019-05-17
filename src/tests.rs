@@ -383,3 +383,32 @@ Bonjour monde",
     assert_eq!(writer.bookmarks["hello"], 14);
     assert_eq!(writer.bookmarks["world"], 27);
 }
+
+#[test]
+fn functional_test_one() {
+    SETUP_WRITER!(
+        "Hello there
+
+I'm a VN written in the Ink format
+
+Do you like it?
+
++ [Yes, I like it!] -> like
++ [No, I do not like it] -> hate
+
+=== like
+
+Thank you!
+
+-> END
+
+=== hate
+
+Oh, I see
+
+-> END",
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello There|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
+}
