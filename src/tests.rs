@@ -241,7 +241,7 @@ Bonjour monde"#,
 fn test_writer_question_fake_jump_one() {
     SETUP_WRITER!("+ [Hello world] -> example", writer);
 
-    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
+    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
 
     assert_eq!(writer.jump_places["example"], 14);
 
@@ -256,8 +256,8 @@ fn test_writer_question_fake_jump_two() {
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.jump_places["example"], 14);
     assert_eq!(writer.jump_places["sample"], 31);
@@ -274,8 +274,8 @@ Bonjour monde",
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.jump_places["example"], 14);
     assert_eq!(writer.jump_places["sample"], 31);
@@ -298,8 +298,8 @@ Bonjour monde
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 1, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 2, writer);
+    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
+    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.index, 89);
 
@@ -398,8 +398,9 @@ Ciao mondo",
 
     assert_eq!(writer.index, 26);
 
-    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
     assert_eq!(writer.bookmarks["hello"], 14);
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
 }
 
 #[test]
@@ -415,15 +416,34 @@ Bonjour monde",
 
     assert_eq!(writer.index, 42);
 
-    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
     assert_eq!(writer.bookmarks["hello"], 14);
     assert_eq!(writer.bookmarks["world"], 27);
+
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
 }
 
 // --- FUNCTIONAL TESTS ---
 
-// #[test]
+#[test]
 fn functional_test_one() {
+    SETUP_WRITER!(
+        "Hello there
+
+I'm a VN written in the Ink format
+
+Do you like it?
+
+-> END",
+        writer
+    );
+
+    assert_eq!(writer.index, 71);
+
+    assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|E;");
+}
+
+// #[test]
+fn functional_test_two() {
     SETUP_WRITER!(
         "Hello there
 
@@ -450,8 +470,11 @@ Oh, I see
 
     assert_eq!(writer.index, 150);
 
+    assert_eq!(writer.bookmarks["like"], 120);
+    assert_eq!(writer.bookmarks["hate"], 136);
+
     assert_eq!(writer.jump_places["like"], 87);
     assert_eq!(writer.jump_places["hate"], 114);
 
-    assert_eq!(writer.output, "P;Hello There|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
+    assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
 }

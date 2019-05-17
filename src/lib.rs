@@ -141,12 +141,22 @@ impl Writer {
 
                     // If it's the start of a question it starts with two chars and ends with one
                     // If it's the middle/end of a question it start with one char and ends with one
+
+                    let mut jump_pos_offset = 0;
+
                     // TODO: Refactor this
                     if last_line_type == &LineType::Question {
-                        self.index += &text[1].len() + 2;
+                        jump_pos_offset += 2;
                     } else {
-                        self.index += &text[1].len() + 3;
+                        jump_pos_offset += 3;
                     }
+
+                    // TODO: And refactor this
+                    if last_line_type == &LineType::Text {
+                        jump_pos_offset += 1;
+                    }
+
+                    self.index += &text[1].len() + jump_pos_offset;
 
                     // Add to jump places
                     self.jump_places.insert(jump[1].to_string(), self.index);
@@ -154,6 +164,7 @@ impl Writer {
                     self.output
                         .push_str(&format!("{};{:05}", &text[1], &jump_id));
 
+                    // Jump index offset
                     self.index += 5;
                 }
                 LineType::Bookmark => {
@@ -161,6 +172,7 @@ impl Writer {
                     let chars_to_trim: &[char] = &['=', ' '];
                     // Add the new string to the bookmarks
                     let trimmed_string: &str = line.text.trim_matches(chars_to_trim);
+
                     self.bookmarks
                         .insert(trimmed_string.to_string(), self.index);
                 }
