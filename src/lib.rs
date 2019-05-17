@@ -34,6 +34,7 @@ pub struct Writer {
     pub index: usize,
     pub output: String,
     pub bookmarks: HashMap<String, usize>,
+    pub jump_places: HashMap<String, usize>,
 }
 
 impl Line {
@@ -110,10 +111,11 @@ impl Writer {
             index: 0,
             output: String::new(),
             bookmarks: HashMap::new(),
+            jump_places: HashMap::new(),
         }
     }
 
-    pub fn process_bookmarks(&mut self, input: &Reader) {}
+    pub fn replace_jump_places(&mut self) {}
 
     pub fn process_lines(&mut self, input: &Reader) {
         let mut current_line: usize = 0;
@@ -137,8 +139,22 @@ impl Writer {
 
                     let jump_id: usize = 0;
 
+                    // If it's the start of a question it starts with two chars and ends with one
+                    // If it's the middle/end of a question it start with one char and ends with one
+                    // TODO: Refactor this
+                    if last_line_type == &LineType::Question {
+                        self.index += &text[1].len() + 2;
+                    } else {
+                        self.index += &text[1].len() + 3;
+                    }
+
+                    // Add to jump places
+                    self.jump_places.insert(jump[1].to_string(), self.index);
+                    // Add to output
                     self.output
                         .push_str(&format!("{};{:05}", &text[1], &jump_id));
+
+                    self.index += 5;
                 }
                 LineType::Bookmark => {
                     // Remove equal and white spaces
@@ -178,6 +194,14 @@ impl Writer {
                     self.output.push_str(";");
                 } else {
                     self.output.push_str("|");
+                }
+            }
+
+            // If it's the last line I don't add the end pipe and so the index is one less
+            // TODO: Needs refactor
+            if current_line >= input.lines.len() {
+                if !input.lines.is_empty() && input.lines[0].type_ != LineType::Bookmark {
+                    self.index -= 1;
                 }
             }
         }
