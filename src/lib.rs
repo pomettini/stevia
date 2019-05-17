@@ -124,45 +124,55 @@ impl Writer {
         for line in &input.lines {
             match line.type_ {
                 LineType::Undefined => break,
-                LineType::Text => self.output.push_str(&format!("P;{}", line.text)),
+                LineType::Text => {
+                    self.output.push_str(&format!("P;{}", line.text));
+                    self.index += line.text.len();
+                    self.index += 2;
+                }
                 LineType::Question => {
-                    if last_line_type != &LineType::Question {
-                        self.output.push_str("Q;");
-                    }
                     // Check between brackets
-                    let re_text = Regex::new(r"\[(.*?)\]").unwrap();
+                    let re_text = Regex::new(r"\[(.*?)\]")
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap();
                     // Check after arrow
-                    let re_jump = Regex::new(r"\->\s+(.*)$").unwrap();
-
-                    let text = re_text.captures(&line.text).unwrap();
-                    let jump = re_jump.captures(&line.text).unwrap();
+                    let re_jump = Regex::new(r"\->\s+(.*)$")
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap();
 
                     let jump_id: usize = 0;
-
-                    // If it's the start of a question it starts with two chars and ends with one
-                    // If it's the middle/end of a question it start with one char and ends with one
-
                     let mut jump_pos_offset = 0;
 
-                    // TODO: Refactor this
-                    if last_line_type == &LineType::Question {
+                    // Q; prefix offset
+                    if last_line_type != &LineType::Question {
+                        self.output.push_str("Q;");
                         jump_pos_offset += 2;
-                    } else {
-                        jump_pos_offset += 3;
                     }
 
-                    // TODO: And refactor this
-                    if last_line_type == &LineType::Text {
+                    // Add question text offset
+                    jump_pos_offset += &re_text[1].len();
+
+                    // If previous line was not a question
+                    // Add ; prefix offset
+                    if last_line_type == &LineType::Question {
                         jump_pos_offset += 1;
                     }
 
-                    self.index += &text[1].len() + jump_pos_offset;
+                    jump_pos_offset += 1;
+
+                    // Add offset to current index
+                    self.index += jump_pos_offset;
 
                     // Add to jump places
-                    self.jump_places.insert(jump[1].to_string(), self.index);
+                    self.jump_places.insert(re_jump[1].to_string(), self.index);
                     // Add to output
                     self.output
-                        .push_str(&format!("{};{:05}", &text[1], &jump_id));
+                        .push_str(&format!("{};{:05}", &re_text[1], &jump_id));
+
+                    // if last_line_type != &LineType::Question {
+                    //     self.index += 1;
+                    // }
 
                     // Jump index offset
                     self.index += 5;
@@ -176,19 +186,11 @@ impl Writer {
                     self.bookmarks
                         .insert(trimmed_string.to_string(), self.index);
                 }
-                LineType::End => self.output.push_str(&String::from("E;")),
+                LineType::End => {
+                    self.output.push_str(&String::from("E;"));
+                    self.index += 2;
+                }
                 _ => break,
-            }
-
-            // Index should add 3 at the end because
-            // The first two characters are for the prefix
-            // And the last one for the suffix
-            match line.type_ {
-                LineType::Undefined => (),
-                LineType::Text => self.index += line.text.len() + 3,
-                LineType::Question => (),
-                LineType::Bookmark => (),
-                LineType::End => self.index += 3,
             }
 
             last_line_type = &line.type_;
@@ -202,18 +204,13 @@ impl Writer {
                     && input.lines[current_line].type_ != LineType::Question
                 {
                     self.output.push_str("|");
+                    self.index += 1;
                 } else if line.type_ == LineType::Question {
                     self.output.push_str(";");
+                    self.index += 1;
                 } else {
                     self.output.push_str("|");
-                }
-            }
-
-            // If it's the last line I don't add the end pipe and so the index is one less
-            // TODO: Needs refactor
-            if current_line >= input.lines.len() {
-                if !input.lines.is_empty() && input.lines[0].type_ != LineType::Bookmark {
-                    self.index -= 1;
+                    self.index += 1;
                 }
             }
         }
