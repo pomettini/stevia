@@ -46,15 +46,6 @@ impl Line {
     }
 }
 
-impl Question {
-    pub fn new(text: String) -> Question {
-        Question {
-            text: String::new(),
-            jump_pos: 0,
-        }
-    }
-}
-
 impl Reader {
     pub fn from_text(source: &str) -> Reader {
         Reader {
@@ -135,13 +126,13 @@ impl Writer {
                         .unwrap()
                         .captures(&line.text)
                         .unwrap();
+
                     // Check after arrow
                     let re_jump = Regex::new(r"\->\s+(.*)$")
                         .unwrap()
                         .captures(&line.text)
                         .unwrap();
 
-                    let jump_id: usize = 0;
                     let mut jump_pos_offset = 0;
 
                     // Q; prefix offset
@@ -151,28 +142,17 @@ impl Writer {
                     }
 
                     // Add question text offset
-                    jump_pos_offset += &re_text[1].len();
-
-                    // If previous line was not a question
-                    // Add ; prefix offset
-                    if last_line_type == &LineType::Question {
-                        jump_pos_offset += 1;
-                    }
-
-                    jump_pos_offset += 1;
+                    // TODO: Not sure why I need that +1 to the offset
+                    jump_pos_offset += &re_text[1].len() + 1;
 
                     // Add offset to current index
                     self.index += jump_pos_offset;
 
                     // Add to jump places
                     self.jump_places.insert(re_jump[1].to_string(), self.index);
-                    // Add to output
-                    self.output
-                        .push_str(&format!("{};{:05}", &re_text[1], &jump_id));
 
-                    // if last_line_type != &LineType::Question {
-                    //     self.index += 1;
-                    // }
+                    // Add to output (must have 5 numbers)
+                    self.output.push_str(&format!("{};{:05}", &re_text[1], 0));
 
                     // Jump index offset
                     self.index += 5;
@@ -180,6 +160,7 @@ impl Writer {
                 LineType::Bookmark => {
                     // Remove equal and white spaces
                     let chars_to_trim: &[char] = &['=', ' '];
+
                     // Add the new string to the bookmarks
                     let trimmed_string: &str = line.text.trim_matches(chars_to_trim);
 
@@ -190,7 +171,6 @@ impl Writer {
                     self.output.push_str(&String::from("E;"));
                     self.index += 2;
                 }
-                _ => break,
             }
 
             last_line_type = &line.type_;
@@ -217,11 +197,11 @@ impl Writer {
     }
 }
 
-fn main() {
-    // let source = "Hello";
+// fn main() {
+//     let source = "Hello";
 
-    // let mut reader = Reader::from_text(source);
-    // let mut writer = Writer::new();
+//     let mut reader = Reader::from_text(source);
+//     let mut writer = Writer::new();
 
-    // print!("{:?}", context.source);
-}
+//     print!("{:?}", context.source);
+// }

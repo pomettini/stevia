@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use super::*;
 
 #[allow(unused_macros)]
@@ -303,8 +304,8 @@ Bonjour monde
 
     assert_eq!(writer.index, 89);
 
-    // assert_eq!(writer.jump_places["example"], 14);
-    // assert_eq!(writer.jump_places["sample"], 31);
+    assert_eq!(writer.jump_places["example"], 14);
+    assert_eq!(writer.jump_places["sample"], 31);
 
     assert_eq!(writer.jump_places["example"], 67);
     assert_eq!(writer.jump_places["sample"], 84);
@@ -328,7 +329,7 @@ Ciao mondo
         writer
     );
 
-    // assert_eq!(writer.index, 63);
+    assert_eq!(writer.index, 63);
 
     assert_eq!(writer.jump_places["example"], 14);
     assert_eq!(writer.jump_places["sample"], 31);
