@@ -9,11 +9,11 @@ pub mod tests;
 // TODO: Handle all the errors
 // TODO: Add a CLI api
 // TODO: Make an executable
-// TODO: Find a name for the VN format
 // TODO: Document the format
 // Secondary:
 // TODO: Add a way to change backgrounds
 // TODO: Add puntuation
+// TODO: Add variables
 
 #[derive(Debug, PartialEq)]
 pub enum LineType {
@@ -96,7 +96,6 @@ impl Reader {
             match first_char {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => line.type_ = LineType::Text,
                 b'+' => line.type_ = LineType::Question,
-                // TODO: Must check that there are three equals
                 b'=' => line.type_ = LineType::Bookmark,
                 // TODO: Must check between END and JUMP
                 b'-' => line.type_ = LineType::End,
@@ -118,17 +117,15 @@ impl Writer {
 
     pub fn replace_branch_table(&mut self) {
         // TODO: Needs refactor
-        for bookmark in &self.symbols {
-            if !self.branch_table.contains_key::<str>(&bookmark.0) {
-                return;
-            }
+        for symbol in &self.symbols {
+            if self.branch_table.contains_key::<str>(&symbol.0) {
+                for jump_place in self.branch_table.get::<str>(&symbol.0).unwrap() {
+                    let text_to_replace = &format!("{:05}", symbol.1);
+                    let start = jump_place;
+                    let end = start + 5;
 
-            for jump_place in self.branch_table.get::<str>(&bookmark.0).unwrap() {
-                let text_to_replace = &format!("{:05}", bookmark.1);
-                let start = jump_place;
-                let end = start + 5;
-
-                self.output.replace_range(start..&end, text_to_replace);
+                    self.output.replace_range(start..&end, text_to_replace);
+                }
             }
         }
     }
@@ -139,11 +136,9 @@ impl Writer {
 
         for line in &input.lines {
             match line.type_ {
-                LineType::Undefined => break,
+                LineType::Undefined => panic!("Error"),
                 LineType::Text => {
-                    self.output.push_str(&format!("P;{}", line.text));
-                    self.index += line.text.len();
-                    self.index += 2;
+                    self.push_to_output(&format!("P;{}", line.text));
                 }
                 LineType::Question => {
                     // Check between brackets
@@ -162,12 +157,10 @@ impl Writer {
 
                     // Q; prefix offset
                     if last_line_type != &LineType::Question {
-                        self.output.push_str("Q;");
-                        jump_pos_offset += 2;
+                        self.push_to_output("Q;");
                     }
 
                     // Add question text offset
-                    // TODO: Not sure why I need that +1 to the offset
                     jump_pos_offset += &re_text[1].len() + 1;
 
                     // Add offset to current index
@@ -202,8 +195,7 @@ impl Writer {
                     self.symbols.insert(trimmed_string.to_string(), self.index);
                 }
                 LineType::End => {
-                    self.output.push_str(&String::from("E;"));
-                    self.index += 2;
+                    self.push_to_output("E;");
                 }
             }
 
@@ -211,31 +203,35 @@ impl Writer {
 
             current_line += 1;
 
-            // Add separator until it's the last line
-            // TODO: Needs refactor
-            if current_line < input.lines.len() && line.type_ != LineType::Bookmark {
-                if line.type_ == LineType::Question
-                    && input.lines[current_line].type_ != LineType::Question
-                {
-                    self.output.push_str("|");
-                    self.index += 1;
-                } else if line.type_ == LineType::Question {
-                    self.output.push_str(";");
-                    self.index += 1;
-                } else {
-                    self.output.push_str("|");
-                    self.index += 1;
+            // If it's the last line, it exits the function
+            if current_line >= input.lines.len() {
+                return;
+            }
+
+            match line.type_ {
+                LineType::Undefined => panic!("Error"),
+                LineType::Text => {
+                    self.push_to_output("|");
+                }
+                LineType::Question => {
+                    if input.lines[current_line].type_ == LineType::Question {
+                        self.push_to_output(";");
+                    } else {
+                        self.push_to_output("|");
+                    }
+                }
+                LineType::Bookmark => (),
+                LineType::End => {
+                    self.push_to_output("|");
                 }
             }
+
+            self.replace_branch_table();
         }
     }
+
+    fn push_to_output(&mut self, text: &str) {
+        self.output.push_str(&text);
+        self.index += &text.len();
+    }
 }
-
-// fn main() {
-//     let source = "Hello";
-
-//     let mut reader = Reader::from_text(source);
-//     let mut writer = Writer::new();
-
-//     print!("{:?}", context.source);
-// }

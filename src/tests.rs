@@ -3,30 +3,29 @@ use super::*;
 
 #[allow(unused_macros)]
 macro_rules! SETUP_READER {
-    ($r:ident, $i:expr) => {
-        let input = $i;
-        let mut $r = Reader::from_text(input);
-        $r.parse_all_lines();
+    ($reader:ident, $input:expr) => {
+        let input = $input;
+        let mut $reader = Reader::from_text(input);
+        $reader.parse_all_lines();
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! SETUP_WRITER {
-    ($i:expr, $w:ident) => {
-        let input = $i;
+    ($input:expr, $writer:ident) => {
+        let input = $input;
         let mut reader = Reader::from_text(input);
         reader.parse_all_lines();
 
-        let mut $w = Writer::new();
-        $w.process_lines(&reader);
-        $w.replace_branch_table();
+        let mut $writer = Writer::new();
+        $writer.process_lines(&reader);
     };
 }
 
 #[allow(unused_macros)]
-macro_rules! SETUP_symbols {
-    ($e:expr, $j:expr, $w:ident) => {
-        $w.symbols.insert($e, $j);
+macro_rules! SETUP_SYMBOLS {
+    ($name:expr, $address:expr, $writer:ident) => {
+        $writer.symbols.insert($name, $address);
     };
 }
 
@@ -213,6 +212,8 @@ fn test_writer_print_one() {
     SETUP_WRITER!("Hello world", writer);
 
     assert_eq!(writer.output, "P;Hello world");
+
+    assert_eq!(writer.index, 13);
 }
 
 #[test]
@@ -224,6 +225,8 @@ Ciao mondo"#,
     );
 
     assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
+
+    assert_eq!(writer.index, 26);
 }
 
 #[test]
@@ -236,17 +239,19 @@ Bonjour monde"#,
     );
 
     assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
+
+    assert_eq!(writer.index, 42);
 }
 
 #[test]
 fn test_writer_question_fake_jump_one() {
     SETUP_WRITER!("+ [Hello world] -> example", writer);
 
-    SETUP_symbols!(String::from("example"), 0, writer);
-
-    assert_eq!(writer.branch_table["example"], vec![14]);
+    SETUP_SYMBOLS!(String::from("example"), 0, writer);
 
     assert_eq!(writer.output, "Q;Hello world;00000");
+
+    assert_eq!(writer.branch_table["example"], vec![14]);
 }
 
 #[test]
@@ -257,13 +262,13 @@ fn test_writer_question_fake_jump_two() {
         writer
     );
 
-    SETUP_symbols!(String::from("example"), 0, writer);
-    SETUP_symbols!(String::from("sample"), 0, writer);
+    assert_eq!(writer.output, "Q;Hello world;00000;Ciao mondo;00000");
+
+    SETUP_SYMBOLS!(String::from("example"), 0, writer);
+    SETUP_SYMBOLS!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.branch_table["example"], vec![14]);
     assert_eq!(writer.branch_table["sample"], vec![31]);
-
-    assert_eq!(writer.output, "Q;Hello world;00000;Ciao mondo;00000");
 }
 
 #[test]
@@ -275,16 +280,16 @@ Bonjour monde",
         writer
     );
 
-    SETUP_symbols!(String::from("example"), 0, writer);
-    SETUP_symbols!(String::from("sample"), 0, writer);
-
-    assert_eq!(writer.branch_table["example"], vec![14]);
-    assert_eq!(writer.branch_table["sample"], vec![31]);
-
     assert_eq!(
         writer.output,
         "Q;Hello world;00000;Ciao mondo;00000|P;Bonjour monde"
     );
+
+    SETUP_SYMBOLS!(String::from("example"), 0, writer);
+    SETUP_SYMBOLS!(String::from("sample"), 0, writer);
+
+    assert_eq!(writer.branch_table["example"], vec![14]);
+    assert_eq!(writer.branch_table["sample"], vec![31]);
 }
 
 #[test]
@@ -299,18 +304,18 @@ Bonjour monde
         writer
     );
 
-    SETUP_symbols!(String::from("example"), 0, writer);
-    SETUP_symbols!(String::from("sample"), 0, writer);
+    assert_eq!(
+        writer.output,
+        "Q;Hello world;00000;Ciao mondo;00000|P;Bonjour monde|Q;Hello world;00000;Ciao mondo;00000"
+    );
+
+    SETUP_SYMBOLS!(String::from("example"), 0, writer);
+    SETUP_SYMBOLS!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.index, 89);
 
     assert_eq!(writer.branch_table["example"], vec![14, 67]);
     assert_eq!(writer.branch_table["sample"], vec![31, 84]);
-
-    assert_eq!(
-        writer.output,
-        "Q;Hello world;00000;Ciao mondo;00000|P;Bonjour monde|Q;Hello world;00000;Ciao mondo;00000"
-    );
 }
 
 #[test]
@@ -326,6 +331,11 @@ Ciao mondo
         writer
     );
 
+    assert_eq!(
+        writer.output,
+        "Q;Hello world;00037;Ciao mondo;00051|P;Hello world|P;Ciao mondo"
+    );
+
     assert_eq!(writer.index, 63);
 
     assert_eq!(writer.branch_table["example"], vec![14]);
@@ -333,11 +343,6 @@ Ciao mondo
 
     assert_eq!(writer.symbols["example"], 37);
     assert_eq!(writer.symbols["sample"], 51);
-
-    assert_eq!(
-        writer.output,
-        "Q;Hello world;00037;Ciao mondo;00051|P;Hello world|P;Ciao mondo"
-    );
 }
 
 #[test]
@@ -357,9 +362,9 @@ fn test_writer_end_two() {
         writer
     );
 
-    assert_eq!(writer.index, 16);
-
     assert_eq!(writer.output, "P;Hello world|E;");
+
+    assert_eq!(writer.index, 16);
 }
 
 #[test]
@@ -394,11 +399,11 @@ Ciao mondo",
         writer
     );
 
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
+
     assert_eq!(writer.index, 26);
 
     assert_eq!(writer.symbols["hello"], 14);
-
-    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
 }
 
 #[test]
@@ -412,12 +417,12 @@ Bonjour monde",
         writer
     );
 
+    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
+
     assert_eq!(writer.index, 42);
 
     assert_eq!(writer.symbols["hello"], 14);
     assert_eq!(writer.symbols["world"], 27);
-
-    assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
 }
 
 // --- FUNCTIONAL TESTS ---
@@ -435,12 +440,12 @@ Do you like it?
         writer
     );
 
-    assert_eq!(writer.index, 71);
-
     assert_eq!(
         writer.output,
         "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|E;"
     );
+
+    assert_eq!(writer.index, 71);
 }
 
 #[test]
@@ -469,6 +474,8 @@ Oh, I see
         writer
     );
 
+    assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
+
     assert_eq!(writer.index, 150);
 
     assert_eq!(writer.symbols["like"], 120);
@@ -476,6 +483,4 @@ Oh, I see
 
     assert_eq!(writer.branch_table["like"], vec![87]);
     assert_eq!(writer.branch_table["hate"], vec![114]);
-
-    assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
 }
