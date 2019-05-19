@@ -244,7 +244,7 @@ fn test_writer_question_fake_jump_one() {
 
     SETUP_BOOKMARKS!(String::from("example"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], 14);
+    assert_eq!(writer.jump_places["example"], vec![14]);
 
     assert_eq!(writer.output, "Q;Hello world;00000");
 }
@@ -260,8 +260,8 @@ fn test_writer_question_fake_jump_two() {
     SETUP_BOOKMARKS!(String::from("example"), 0, writer);
     SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], 14);
-    assert_eq!(writer.jump_places["sample"], 31);
+    assert_eq!(writer.jump_places["example"], vec![14]);
+    assert_eq!(writer.jump_places["sample"], vec![31]);
 
     assert_eq!(writer.output, "Q;Hello world;00000;Ciao mondo;00000");
 }
@@ -278,8 +278,8 @@ Bonjour monde",
     SETUP_BOOKMARKS!(String::from("example"), 0, writer);
     SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], 14);
-    assert_eq!(writer.jump_places["sample"], 31);
+    assert_eq!(writer.jump_places["example"], vec![14]);
+    assert_eq!(writer.jump_places["sample"], vec![31]);
 
     assert_eq!(
         writer.output,
@@ -304,11 +304,8 @@ Bonjour monde
 
     assert_eq!(writer.index, 89);
 
-    assert_eq!(writer.jump_places["example"], 14);
-    assert_eq!(writer.jump_places["sample"], 31);
-
-    assert_eq!(writer.jump_places["example"], 67);
-    assert_eq!(writer.jump_places["sample"], 84);
+    assert_eq!(writer.jump_places["example"], vec![14, 67]);
+    assert_eq!(writer.jump_places["sample"], vec![31, 84]);
 
     assert_eq!(
         writer.output,
@@ -331,15 +328,15 @@ Ciao mondo
 
     assert_eq!(writer.index, 63);
 
-    assert_eq!(writer.jump_places["example"], 14);
-    assert_eq!(writer.jump_places["sample"], 31);
+    assert_eq!(writer.jump_places["example"], vec![14]);
+    assert_eq!(writer.jump_places["sample"], vec![31]);
 
     assert_eq!(writer.bookmarks["example"], 37);
     assert_eq!(writer.bookmarks["sample"], 51);
 
     assert_eq!(
         writer.output,
-        "Q;Hello world;00000;Ciao mondo;00000|P;Hello world|P;Ciao mondo"
+        "Q;Hello world;00037;Ciao mondo;00051|P;Hello world|P;Ciao mondo"
     );
 }
 
@@ -477,8 +474,8 @@ Oh, I see
     assert_eq!(writer.bookmarks["like"], 120);
     assert_eq!(writer.bookmarks["hate"], 136);
 
-    assert_eq!(writer.jump_places["like"], 87);
-    assert_eq!(writer.jump_places["hate"], 114);
+    assert_eq!(writer.jump_places["like"], vec![87]);
+    assert_eq!(writer.jump_places["hate"], vec![114]);
 
     assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
 }

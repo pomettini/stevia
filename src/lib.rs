@@ -33,8 +33,9 @@ pub struct Reader {
 pub struct Writer {
     pub index: usize,
     pub output: String,
+    // TODO: Refactor to use better terms like symbols
     pub bookmarks: HashMap<String, usize>,
-    pub jump_places: HashMap<String, usize>,
+    pub jump_places: HashMap<String, Vec<usize>>,
 }
 
 impl Line {
@@ -106,7 +107,22 @@ impl Writer {
         }
     }
 
-    pub fn replace_jump_places(&mut self) {}
+    pub fn replace_jump_places(&mut self) {
+        // TODO: Needs refactor
+        for bookmark in &self.bookmarks {
+            if !self.jump_places.contains_key::<str>(&bookmark.0) {
+                return;
+            }
+
+            for jump_place in self.jump_places.get::<str>(&bookmark.0).unwrap() {
+                let text_to_replace = &format!("{:05}", bookmark.1);
+                let start = jump_place;
+                let end = start + 5;
+
+                self.output.replace_range(start..&end, text_to_replace);
+            }
+        }
+    }
 
     pub fn process_lines(&mut self, input: &Reader) {
         let mut current_line: usize = 0;
@@ -148,8 +164,18 @@ impl Writer {
                     // Add offset to current index
                     self.index += jump_pos_offset;
 
+                    // TODO: Refactor this?
+                    // If jump place key is empty, add an empty vector inside
+                    self.jump_places
+                        .entry(re_jump[1].to_string())
+                        .or_insert_with(Vec::new);
+
+                    // Add jump place to that vector
+                    let mut indices = self.jump_places[&re_jump[1].to_string()].clone();
+                    indices.push(self.index);
+
                     // Add to jump places
-                    self.jump_places.insert(re_jump[1].to_string(), self.index);
+                    self.jump_places.insert(re_jump[1].to_string(), indices);
 
                     // Add to output (must have 5 numbers)
                     self.output.push_str(&format!("{};{:05}", &re_text[1], 0));
