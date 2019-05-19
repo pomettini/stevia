@@ -8,12 +8,14 @@ pub mod tests;
 // Priority:
 // TODO: Handle all the errors
 // TODO: Add a CLI api
-// TODO: Make an executable
 // TODO: Document the format
 // Secondary:
-// TODO: Add a way to change backgrounds
+// TODO: Add a way to load/manage/change backgrounds
 // TODO: Add puntuation
 // TODO: Add variables
+// TODO: Add a way to test all the branches automatically
+// TODO: Add a test executable (GGEZ?)
+// TODO: Export the .h file for GBA
 
 #[derive(Debug, PartialEq)]
 pub enum LineType {
