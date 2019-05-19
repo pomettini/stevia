@@ -19,14 +19,14 @@ macro_rules! SETUP_WRITER {
 
         let mut $w = Writer::new();
         $w.process_lines(&reader);
-        $w.replace_jump_places();
+        $w.replace_branch_table();
     };
 }
 
 #[allow(unused_macros)]
-macro_rules! SETUP_BOOKMARKS {
+macro_rules! SETUP_symbols {
     ($e:expr, $j:expr, $w:ident) => {
-        $w.bookmarks.insert($e, $j);
+        $w.symbols.insert($e, $j);
     };
 }
 
@@ -242,9 +242,9 @@ Bonjour monde"#,
 fn test_writer_question_fake_jump_one() {
     SETUP_WRITER!("+ [Hello world] -> example", writer);
 
-    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
+    SETUP_symbols!(String::from("example"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], vec![14]);
+    assert_eq!(writer.branch_table["example"], vec![14]);
 
     assert_eq!(writer.output, "Q;Hello world;00000");
 }
@@ -257,11 +257,11 @@ fn test_writer_question_fake_jump_two() {
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
+    SETUP_symbols!(String::from("example"), 0, writer);
+    SETUP_symbols!(String::from("sample"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], vec![14]);
-    assert_eq!(writer.jump_places["sample"], vec![31]);
+    assert_eq!(writer.branch_table["example"], vec![14]);
+    assert_eq!(writer.branch_table["sample"], vec![31]);
 
     assert_eq!(writer.output, "Q;Hello world;00000;Ciao mondo;00000");
 }
@@ -275,11 +275,11 @@ Bonjour monde",
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
+    SETUP_symbols!(String::from("example"), 0, writer);
+    SETUP_symbols!(String::from("sample"), 0, writer);
 
-    assert_eq!(writer.jump_places["example"], vec![14]);
-    assert_eq!(writer.jump_places["sample"], vec![31]);
+    assert_eq!(writer.branch_table["example"], vec![14]);
+    assert_eq!(writer.branch_table["sample"], vec![31]);
 
     assert_eq!(
         writer.output,
@@ -299,13 +299,13 @@ Bonjour monde
         writer
     );
 
-    SETUP_BOOKMARKS!(String::from("example"), 0, writer);
-    SETUP_BOOKMARKS!(String::from("sample"), 0, writer);
+    SETUP_symbols!(String::from("example"), 0, writer);
+    SETUP_symbols!(String::from("sample"), 0, writer);
 
     assert_eq!(writer.index, 89);
 
-    assert_eq!(writer.jump_places["example"], vec![14, 67]);
-    assert_eq!(writer.jump_places["sample"], vec![31, 84]);
+    assert_eq!(writer.branch_table["example"], vec![14, 67]);
+    assert_eq!(writer.branch_table["sample"], vec![31, 84]);
 
     assert_eq!(
         writer.output,
@@ -328,11 +328,11 @@ Ciao mondo
 
     assert_eq!(writer.index, 63);
 
-    assert_eq!(writer.jump_places["example"], vec![14]);
-    assert_eq!(writer.jump_places["sample"], vec![31]);
+    assert_eq!(writer.branch_table["example"], vec![14]);
+    assert_eq!(writer.branch_table["sample"], vec![31]);
 
-    assert_eq!(writer.bookmarks["example"], 37);
-    assert_eq!(writer.bookmarks["sample"], 51);
+    assert_eq!(writer.symbols["example"], 37);
+    assert_eq!(writer.symbols["sample"], 51);
 
     assert_eq!(
         writer.output,
@@ -368,7 +368,7 @@ fn test_writer_bookmark_position_zero_one() {
 
     assert_eq!(writer.index, 0);
 
-    assert_eq!(writer.bookmarks["hello"], 0);
+    assert_eq!(writer.symbols["hello"], 0);
 }
 
 #[test]
@@ -381,8 +381,8 @@ fn test_writer_bookmark_position_zero_two() {
 
     assert_eq!(writer.index, 0);
 
-    assert_eq!(writer.bookmarks["hello"], 0);
-    assert_eq!(writer.bookmarks["world"], 0);
+    assert_eq!(writer.symbols["hello"], 0);
+    assert_eq!(writer.symbols["world"], 0);
 }
 
 #[test]
@@ -396,7 +396,7 @@ Ciao mondo",
 
     assert_eq!(writer.index, 26);
 
-    assert_eq!(writer.bookmarks["hello"], 14);
+    assert_eq!(writer.symbols["hello"], 14);
 
     assert_eq!(writer.output, "P;Hello world|P;Ciao mondo");
 }
@@ -414,8 +414,8 @@ Bonjour monde",
 
     assert_eq!(writer.index, 42);
 
-    assert_eq!(writer.bookmarks["hello"], 14);
-    assert_eq!(writer.bookmarks["world"], 27);
+    assert_eq!(writer.symbols["hello"], 14);
+    assert_eq!(writer.symbols["world"], 27);
 
     assert_eq!(writer.output, "P;Hello world|P;Ciao mondo|P;Bonjour monde");
 }
@@ -471,11 +471,11 @@ Oh, I see
 
     assert_eq!(writer.index, 150);
 
-    assert_eq!(writer.bookmarks["like"], 120);
-    assert_eq!(writer.bookmarks["hate"], 136);
+    assert_eq!(writer.symbols["like"], 120);
+    assert_eq!(writer.symbols["hate"], 136);
 
-    assert_eq!(writer.jump_places["like"], vec![87]);
-    assert_eq!(writer.jump_places["hate"], vec![114]);
+    assert_eq!(writer.branch_table["like"], vec![87]);
+    assert_eq!(writer.branch_table["hate"], vec![114]);
 
     assert_eq!(writer.output, "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
 }

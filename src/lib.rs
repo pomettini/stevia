@@ -5,6 +5,16 @@ use std::collections::*;
 
 pub mod tests;
 
+// Priority:
+// TODO: Handle all the errors
+// TODO: Add a CLI api
+// TODO: Make an executable
+// TODO: Find a name for the VN format
+// TODO: Document the format
+// Secondary:
+// TODO: Add a way to change backgrounds
+// TODO: Add puntuation
+
 #[derive(Debug, PartialEq)]
 pub enum LineType {
     Undefined,
@@ -33,14 +43,13 @@ pub struct Reader {
 pub struct Writer {
     pub index: usize,
     pub output: String,
-    // TODO: Refactor to use better terms like symbols
-    pub bookmarks: HashMap<String, usize>,
-    pub jump_places: HashMap<String, Vec<usize>>,
+    pub symbols: HashMap<String, usize>,
+    pub branch_table: HashMap<String, Vec<usize>>,
 }
 
 impl Line {
-    pub fn new(text: String) -> Line {
-        Line {
+    pub fn new(text: String) -> Self {
+        Self {
             text,
             type_: LineType::Undefined,
         }
@@ -48,8 +57,8 @@ impl Line {
 }
 
 impl Reader {
-    pub fn from_text(source: &str) -> Reader {
-        Reader {
+    pub fn from_text(source: &str) -> Self {
+        Self {
             source: String::from(source),
             lines: Vec::new(),
         }
@@ -98,23 +107,23 @@ impl Reader {
 }
 
 impl Writer {
-    pub fn new() -> Writer {
-        Writer {
+    pub fn new() -> Self {
+        Self {
             index: 0,
             output: String::new(),
-            bookmarks: HashMap::new(),
-            jump_places: HashMap::new(),
+            symbols: HashMap::new(),
+            branch_table: HashMap::new(),
         }
     }
 
-    pub fn replace_jump_places(&mut self) {
+    pub fn replace_branch_table(&mut self) {
         // TODO: Needs refactor
-        for bookmark in &self.bookmarks {
-            if !self.jump_places.contains_key::<str>(&bookmark.0) {
+        for bookmark in &self.symbols {
+            if !self.branch_table.contains_key::<str>(&bookmark.0) {
                 return;
             }
 
-            for jump_place in self.jump_places.get::<str>(&bookmark.0).unwrap() {
+            for jump_place in self.branch_table.get::<str>(&bookmark.0).unwrap() {
                 let text_to_replace = &format!("{:05}", bookmark.1);
                 let start = jump_place;
                 let end = start + 5;
@@ -166,16 +175,16 @@ impl Writer {
 
                     // TODO: Refactor this?
                     // If jump place key is empty, add an empty vector inside
-                    self.jump_places
+                    self.branch_table
                         .entry(re_jump[1].to_string())
                         .or_insert_with(Vec::new);
 
                     // Add jump place to that vector
-                    let mut indices = self.jump_places[&re_jump[1].to_string()].clone();
+                    let mut indices = self.branch_table[&re_jump[1].to_string()].clone();
                     indices.push(self.index);
 
                     // Add to jump places
-                    self.jump_places.insert(re_jump[1].to_string(), indices);
+                    self.branch_table.insert(re_jump[1].to_string(), indices);
 
                     // Add to output (must have 5 numbers)
                     self.output.push_str(&format!("{};{:05}", &re_text[1], 0));
@@ -187,11 +196,10 @@ impl Writer {
                     // Remove equal and white spaces
                     let chars_to_trim: &[char] = &['=', ' '];
 
-                    // Add the new string to the bookmarks
+                    // Add the new string to the symbols
                     let trimmed_string: &str = line.text.trim_matches(chars_to_trim);
 
-                    self.bookmarks
-                        .insert(trimmed_string.to_string(), self.index);
+                    self.symbols.insert(trimmed_string.to_string(), self.index);
                 }
                 LineType::End => {
                     self.output.push_str(&String::from("E;"));
