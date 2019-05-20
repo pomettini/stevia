@@ -23,17 +23,13 @@ pub enum LineType {
     Text,
     Question,
     Bookmark,
+    Constant,
     End,
 }
 
 pub struct Line {
     pub text: String,
     pub type_: LineType,
-}
-
-pub struct Question {
-    pub text: String,
-    pub jump_pos: usize,
 }
 
 pub struct Reader {
@@ -47,6 +43,7 @@ pub struct Writer {
     pub output: String,
     pub symbols: HashMap<String, usize>,
     pub branch_table: HashMap<String, Vec<usize>>,
+    pub constants: HashMap<String, String>,
 }
 
 impl Line {
@@ -96,11 +93,25 @@ impl Reader {
             let first_char = line.text.as_bytes().get(0).unwrap();
 
             match first_char {
-                b'a'...b'z' | b'A'...b'Z' | 0...9 => line.type_ = LineType::Text,
+                b'a'...b'z' | b'A'...b'Z' | 0...9 => {
+                    let re_text = Regex::new(r"CONST").unwrap();
+
+                    if re_text.is_match(&line.text) {
+                        line.type_ = LineType::Constant;
+                    } else {
+                        line.type_ = LineType::Text;
+                    }
+                }
                 b'+' => line.type_ = LineType::Question,
                 b'=' => line.type_ = LineType::Bookmark,
                 // TODO: Must check between END and JUMP
-                b'-' => line.type_ = LineType::End,
+                b'-' => {
+                    let re_text = Regex::new(r"-> END").unwrap();
+
+                    if re_text.is_match(&line.text) {
+                        line.type_ = LineType::End;
+                    }
+                }
                 _ => line.type_ = LineType::Undefined,
             }
         }
@@ -114,6 +125,7 @@ impl Writer {
             output: String::new(),
             symbols: HashMap::new(),
             branch_table: HashMap::new(),
+            constants: HashMap::new(),
         }
     }
 
@@ -140,7 +152,18 @@ impl Writer {
             match line.type_ {
                 LineType::Undefined => panic!("Error"),
                 LineType::Text => {
-                    self.push_to_output(&format!("P;{}", line.text));
+                    // TODO: Regex must handle all occurrences in the string
+                    let re_key = Regex::new(r"\{(.*?)\}").unwrap();
+
+                    if re_key.is_match(&line.text) {
+                        // let mut buffer: String = line.text.clone();
+                        // for key in re_key.capture_names() {
+                        //     buffer = re_key.replace(&buffer, key.unwrap()).to_string();
+                        // }
+                        // self.push_to_output(&format!("P;{}", &buffer));
+                    } else {
+                        self.push_to_output(&format!("P;{}", line.text));
+                    }
                 }
                 LineType::Question => {
                     // Check between brackets
@@ -196,6 +219,22 @@ impl Writer {
 
                     self.symbols.insert(trimmed_string.to_string(), self.index);
                 }
+                LineType::Constant => {
+                    // TODO: Use a better regex
+                    let re_key = Regex::new(r#" ((?:\\.|[^"\\])*) ="#)
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap();
+
+                    // TODO: Use a better regex
+                    let re_value = Regex::new(r#""((?:\\.|[^"\\])*)""#)
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap();
+
+                    self.constants
+                        .insert(re_key[1].to_string(), re_value[1].to_string());
+                }
                 LineType::End => {
                     self.push_to_output("E;");
                 }
@@ -223,6 +262,7 @@ impl Writer {
                     }
                 }
                 LineType::Bookmark => (),
+                LineType::Constant => (),
                 LineType::End => {
                     self.push_to_output("|");
                 }

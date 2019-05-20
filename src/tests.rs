@@ -12,13 +12,13 @@ macro_rules! SETUP_READER {
 
 #[allow(unused_macros)]
 macro_rules! SETUP_WRITER {
-    ($input:expr, $writer:ident) => {
+    ($input:expr, $reader:ident, $writer:ident) => {
         let input = $input;
-        let mut reader = Reader::from_text(input);
-        reader.parse_all_lines();
+        let mut $reader = Reader::from_text(input);
+        $reader.parse_all_lines();
 
         let mut $writer = Writer::new();
-        $writer.process_lines(&reader);
+        $writer.process_lines(&$reader);
     };
 }
 
@@ -209,7 +209,7 @@ fn test_parse_end_two() {
 
 #[test]
 fn test_writer_print_one() {
-    SETUP_WRITER!("Hello world", writer);
+    SETUP_WRITER!("Hello world", reader, writer);
 
     assert_eq!(writer.output, "P;Hello world");
 
@@ -221,6 +221,7 @@ fn test_writer_print_two() {
     SETUP_WRITER!(
         r#"Hello world
 Ciao mondo"#,
+        reader,
         writer
     );
 
@@ -235,6 +236,7 @@ fn test_writer_print_three() {
         r#"Hello world
 Ciao mondo
 Bonjour monde"#,
+        reader,
         writer
     );
 
@@ -245,7 +247,7 @@ Bonjour monde"#,
 
 #[test]
 fn test_writer_question_fake_jump_one() {
-    SETUP_WRITER!("+ [Hello world] -> example", writer);
+    SETUP_WRITER!("+ [Hello world] -> example", reaer, writer);
 
     SETUP_SYMBOLS!(String::from("example"), 0, writer);
 
@@ -259,6 +261,7 @@ fn test_writer_question_fake_jump_two() {
     SETUP_WRITER!(
         "+ [Hello world] -> example
 + [Ciao mondo] -> sample",
+        reader,
         writer
     );
 
@@ -277,6 +280,7 @@ fn test_writer_question_fake_jump_and_print() {
         "+ [Hello world] -> example
 + [Ciao mondo] -> sample
 Bonjour monde",
+        reader,
         writer
     );
 
@@ -301,6 +305,7 @@ Bonjour monde
 + [Hello world] -> example
 + [Ciao mondo] -> sample
 ",
+        reader,
         writer
     );
 
@@ -328,6 +333,7 @@ Hello world
 === sample
 Ciao mondo
 ",
+        reader,
         writer
     );
 
@@ -347,7 +353,7 @@ Ciao mondo
 
 #[test]
 fn test_writer_end_one() {
-    SETUP_WRITER!("-> END", writer);
+    SETUP_WRITER!("-> END", reader, writer);
 
     assert_eq!(writer.index, 2);
 
@@ -359,6 +365,7 @@ fn test_writer_end_two() {
     SETUP_WRITER!(
         "Hello world
 -> END",
+        reader,
         writer
     );
 
@@ -369,7 +376,7 @@ fn test_writer_end_two() {
 
 #[test]
 fn test_writer_bookmark_position_zero_one() {
-    SETUP_WRITER!("=== hello", writer);
+    SETUP_WRITER!("=== hello", reader, writer);
 
     assert_eq!(writer.index, 0);
 
@@ -381,6 +388,7 @@ fn test_writer_bookmark_position_zero_two() {
     SETUP_WRITER!(
         "=== hello
 === world",
+        reader,
         writer
     );
 
@@ -396,6 +404,7 @@ fn test_writer_bookmark_one() {
         "Hello world
 === hello
 Ciao mondo",
+        reader,
         writer
     );
 
@@ -414,6 +423,7 @@ fn test_writer_bookmark_two() {
 Ciao mondo
 === world
 Bonjour monde",
+        reader,
         writer
     );
 
@@ -423,6 +433,76 @@ Bonjour monde",
 
     assert_eq!(writer.symbols["hello"], 14);
     assert_eq!(writer.symbols["world"], 27);
+}
+
+#[test]
+fn test_writer_declare_constants_one() {
+    SETUP_WRITER!("CONST HELLO = \"World\"", reader, writer);
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+}
+
+#[test]
+fn test_writer_declare_constants_two() {
+    SETUP_WRITER!(
+        "CONST HELLO = \"World\"
+CONST CIAO = \"Mondo\"",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+    assert_eq!(reader.lines[1].type_, LineType::Constant);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+    assert_eq!(writer.constants["CIAO"], "Mondo");
+}
+
+#[test]
+fn test_writer_constants_one() {
+    SETUP_WRITER!(
+        "CONST HELLO = \"World\"
+Hello {HELLO}",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello World");
+
+    // assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+    assert_eq!(reader.lines[1].type_, LineType::Text);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+}
+
+#[test]
+fn test_writer_constants_two() {
+    SETUP_WRITER!(
+        "CONST HELLO = \"World\"
+CONST CIAO = \"Mondo\"
+Hello {HELLO} ciao {CIAO}",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Hello World Ciao Mondo");
+
+    // assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+    assert_eq!(reader.lines[1].type_, LineType::Constant);
+    assert_eq!(reader.lines[2].type_, LineType::Text);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+    assert_eq!(writer.constants["CIAO"], "Mondo");
 }
 
 // --- FUNCTIONAL TESTS ---
@@ -437,6 +517,7 @@ I'm a VN written in the Ink format
 Do you like it?
 
 -> END",
+        reader,
         writer
     );
 
@@ -471,6 +552,7 @@ Thank you!
 Oh, I see
 
 -> END",
+        reader,
         writer
     );
 
