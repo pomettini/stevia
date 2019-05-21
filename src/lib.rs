@@ -11,7 +11,7 @@ pub mod tests;
 // TODO: Document the format
 // Secondary:
 // TODO: Add a way to load/manage/change backgrounds
-// TODO: Add puntuation
+// TODO: Add punctuation
 // TODO: Add variables
 // TODO: Add a way to test all the branches automatically
 // TODO: Add a test executable (GGEZ?)
@@ -94,6 +94,7 @@ impl Reader {
 
             match first_char {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => {
+                    // TODO: Must match with n white spaces
                     let re_text = Regex::new(r"CONST").unwrap();
 
                     if re_text.is_match(&line.text) {
@@ -153,15 +154,23 @@ impl Writer {
                 LineType::Undefined => panic!("Error"),
                 LineType::Text => {
                     // TODO: Regex must handle all occurrences in the string
-                    let re_key = Regex::new(r"\{(.*?)\}").unwrap();
+                    let re_key = Regex::new(r"\{(?P<key>.*?)\}").unwrap();
 
+                    // If text has variables inside
                     if re_key.is_match(&line.text) {
-                        // let mut buffer: String = line.text.clone();
-                        // for key in re_key.capture_names() {
-                        //     buffer = re_key.replace(&buffer, key.unwrap()).to_string();
-                        // }
-                        // self.push_to_output(&format!("P;{}", &buffer));
+                        // Copy the buffer
+                        let mut output = line.text.clone();
+
+                        for caps in re_key.captures_iter(&line.text) {
+                            // I replace the content of the variable
+                            // With the value on the constant table
+                            let key = caps.get(1).unwrap().as_str();
+                            output = output.replace(&format!("{{{}}}", key), &self.constants[key]);
+                        }
+
+                        self.push_to_output(&format!("P;{}", &output));
                     } else {
+                        // If has no variables inside
                         self.push_to_output(&format!("P;{}", line.text));
                     }
                 }

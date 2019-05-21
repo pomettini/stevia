@@ -247,7 +247,7 @@ Bonjour monde"#,
 
 #[test]
 fn test_writer_question_fake_jump_one() {
-    SETUP_WRITER!("+ [Hello world] -> example", reaer, writer);
+    SETUP_WRITER!("+ [Hello world] -> example", reader, writer);
 
     SETUP_SYMBOLS!(String::from("example"), 0, writer);
 
@@ -475,7 +475,7 @@ Hello {HELLO}",
 
     assert_eq!(writer.output, "P;Hello World");
 
-    // assert_eq!(writer.index, 0);
+    assert_eq!(writer.index, 13);
 
     assert_eq!(reader.lines[0].type_, LineType::Constant);
     assert_eq!(reader.lines[1].type_, LineType::Text);
@@ -488,14 +488,14 @@ fn test_writer_constants_two() {
     SETUP_WRITER!(
         "CONST HELLO = \"World\"
 CONST CIAO = \"Mondo\"
-Hello {HELLO} ciao {CIAO}",
+Hello {HELLO} Ciao {CIAO}",
         reader,
         writer
     );
 
     assert_eq!(writer.output, "P;Hello World Ciao Mondo");
 
-    // assert_eq!(writer.index, 0);
+    assert_eq!(writer.index, 24);
 
     assert_eq!(reader.lines[0].type_, LineType::Constant);
     assert_eq!(reader.lines[1].type_, LineType::Constant);
