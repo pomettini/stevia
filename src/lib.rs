@@ -1,3 +1,5 @@
+#![cfg_attr(feature="clippy", allow(clippy_pedantic))]
+
 extern crate regex;
 
 use regex::Regex;
