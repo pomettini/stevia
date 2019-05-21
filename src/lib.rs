@@ -12,7 +12,6 @@ pub mod tests;
 // Secondary:
 // TODO: Add a way to load/manage/change backgrounds
 // TODO: Add punctuation
-// TODO: Add variables
 // TODO: Add a way to test all the branches automatically
 // TODO: Add a test executable (GGEZ?)
 // TODO: Export the .h file for GBA
@@ -153,7 +152,6 @@ impl Writer {
             match line.type_ {
                 LineType::Undefined => panic!("Error"),
                 LineType::Text => {
-                    // TODO: Regex must handle all occurrences in the string
                     let re_key = Regex::new(r"\{(?P<key>.*?)\}").unwrap();
 
                     // If text has variables inside
@@ -168,6 +166,7 @@ impl Writer {
                             output = output.replace(&format!("{{{}}}", key), &self.constants[key]);
                         }
 
+                        // Push the buffer to the output
                         self.push_to_output(&format!("P;{}", &output));
                     } else {
                         // If has no variables inside

@@ -42,6 +42,16 @@ fn test_parse_text_line_one() {
 }
 
 #[test]
+fn test_parse_text_line_one_space() {
+    SETUP_READER!(reader, r#" Hello world"#);
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].text, "Hello world");
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
 fn test_parse_text_line_two() {
     SETUP_READER!(
         reader,
@@ -146,6 +156,14 @@ fn test_parse_question_one() {
 }
 
 #[test]
+fn test_parse_question_one_space() {
+    SETUP_READER!(reader, r#"+  [Hello!]  ->  hello"#);
+
+    assert_eq!(reader.lines.len(), 1);
+    assert_eq!(reader.lines[0].type_, LineType::Question);
+}
+
+#[test]
 fn test_parse_question_two() {
     SETUP_READER!(
         reader,
@@ -169,6 +187,15 @@ fn test_parse_bookmark_one() {
 }
 
 #[test]
+fn test_parse_bookmark_one_space() {
+    SETUP_READER!(reader, r#"===  hello"#);
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].type_, LineType::Bookmark);
+}
+
+#[test]
 fn test_parse_bookmark_two() {
     SETUP_READER!(
         reader,
@@ -185,6 +212,15 @@ fn test_parse_bookmark_two() {
 #[test]
 fn test_parse_end_one() {
     SETUP_READER!(reader, r#"-> END"#);
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].type_, LineType::End);
+}
+
+#[test]
+fn test_parse_end_one_space() {
+    SETUP_READER!(reader, r#" ->  END"#);
 
     assert_eq!(reader.lines.len(), 1);
 
@@ -462,6 +498,28 @@ CONST CIAO = \"Mondo\"",
 
     assert_eq!(writer.constants["HELLO"], "World");
     assert_eq!(writer.constants["CIAO"], "Mondo");
+}
+
+#[test]
+fn test_writer_declare_constants_one_space() {
+    SETUP_WRITER!("CONST  HELLO  =  \"World\"", reader, writer);
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+}
+
+#[test]
+fn test_writer_declare_constants_two_space() {
+    SETUP_WRITER!(" CONST  HELLO  =  \"World\"", reader, writer);
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+
+    assert_eq!(writer.constants["HELLO"], "World");
 }
 
 #[test]
