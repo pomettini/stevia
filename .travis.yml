@@ -7,3 +7,8 @@ rust:
 os:
   - linux
   - osx
+cache: cargo
+script:
+  - cargo build
+  - cargo test
+  - cargo test --bin stevia

@@ -1,4 +1,4 @@
-#![cfg_attr(feature="clippy", allow(clippy_pedantic))]
+#![cfg_attr(feature = "clippy", allow(clippy_pedantic))]
 
 extern crate regex;
 
@@ -9,7 +9,6 @@ pub mod tests;
 
 // Priority:
 // TODO: Handle all the errors
-// TODO: Add a CLI api
 // TODO: Document the format
 // Secondary:
 // TODO: Add a way to load/manage/change backgrounds
