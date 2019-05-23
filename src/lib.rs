@@ -8,7 +8,6 @@ use std::collections::*;
 pub mod tests;
 
 // Priority:
-// TODO: Handle all the errors
 // TODO: Document the format
 // Secondary:
 // TODO: Add a way to load/manage/change backgrounds
@@ -16,6 +15,7 @@ pub mod tests;
 // TODO: Add a way to test all the branches automatically
 // TODO: Add a test executable (GGEZ?)
 // TODO: Export the .h file for GBA
+// TODO: Implement jumps
 
 #[derive(Debug, PartialEq)]
 pub enum LineType {
@@ -76,8 +76,10 @@ impl Reader {
         for line in lines {
             // Skips empty lines
             if !line.is_empty() {
-                let l = Line::new(String::from(line));
-                self.lines.push(l);
+                // Remove empty characters from the start of the string
+                let string_without_spaces = line.trim_start();
+                let string = Line::new(String::from(string_without_spaces));
+                self.lines.push(string);
             }
         }
     }
@@ -90,11 +92,10 @@ impl Reader {
                 return;
             }
 
-            let first_char = line.text.as_bytes().get(0).unwrap();
+            let char_ = line.text.as_bytes().get(0).unwrap();
 
-            match first_char {
+            match char_ {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => {
-                    // TODO: Must match with n white spaces
                     let re_text = Regex::new(r"CONST").unwrap();
 
                     if re_text.is_match(&line.text) {
@@ -107,7 +108,7 @@ impl Reader {
                 b'=' => line.type_ = LineType::Bookmark,
                 // TODO: Must check between END and JUMP
                 b'-' => {
-                    let re_text = Regex::new(r"-> END").unwrap();
+                    let re_text = Regex::new(r"\s?+->\s+?END").unwrap();
 
                     if re_text.is_match(&line.text) {
                         line.type_ = LineType::End;
@@ -135,6 +136,8 @@ impl Writer {
         for symbol in &self.symbols {
             if self.branch_table.contains_key::<str>(&symbol.0) {
                 for jump_place in self.branch_table.get::<str>(&symbol.0).unwrap() {
+                    // The jump should have leading zeros and have a length of five
+                    // Example: 123 -> 00123
                     let text_to_replace = &format!("{:05}", symbol.1);
                     let start = jump_place;
                     let end = start + 5;
@@ -151,7 +154,7 @@ impl Writer {
 
         for line in &input.lines {
             match line.type_ {
-                LineType::Undefined => panic!("Error"),
+                LineType::Undefined => panic!(format!("Line {} cannot be parsed", &current_line)),
                 LineType::Text => {
                     let re_key = Regex::new(r"\{(?P<key>.*?)\}").unwrap();
 
@@ -179,13 +182,23 @@ impl Writer {
                     let re_text = Regex::new(r"\[(.*?)\]")
                         .unwrap()
                         .captures(&line.text)
-                        .unwrap();
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get key of question while parsing at line {}",
+                                &current_line
+                            )
+                        });
 
                     // Check after arrow
                     let re_jump = Regex::new(r"\->\s+(.*)$")
                         .unwrap()
                         .captures(&line.text)
-                        .unwrap();
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get value of question while parsing at line {}",
+                                &current_line
+                            )
+                        });
 
                     let mut jump_pos_offset = 0;
 
@@ -200,7 +213,6 @@ impl Writer {
                     // Add offset to current index
                     self.index += jump_pos_offset;
 
-                    // TODO: Refactor this?
                     // If jump place key is empty, add an empty vector inside
                     self.branch_table
                         .entry(re_jump[1].to_string())
@@ -229,20 +241,32 @@ impl Writer {
                     self.symbols.insert(trimmed_string.to_string(), self.index);
                 }
                 LineType::Constant => {
-                    // TODO: Use a better regex
                     let re_key = Regex::new(r#" ((?:\\.|[^"\\])*) ="#)
                         .unwrap()
                         .captures(&line.text)
-                        .unwrap();
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get key while parsing constant at line {}",
+                                &current_line
+                            )
+                        });
 
-                    // TODO: Use a better regex
                     let re_value = Regex::new(r#""((?:\\.|[^"\\])*)""#)
                         .unwrap()
                         .captures(&line.text)
-                        .unwrap();
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get value while parsing constant at line {}",
+                                &current_line
+                            )
+                        });
 
-                    self.constants
-                        .insert(re_key[1].to_string(), re_value[1].to_string());
+                    // Remove leading and trailing spaces
+                    let const_name = re_key[1].trim().to_string();
+                    let const_value = re_value[1].trim().to_string();
+
+                    // Insert constant to table
+                    self.constants.insert(const_name, const_value);
                 }
                 LineType::End => {
                     self.push_to_output("E;");
@@ -259,7 +283,9 @@ impl Writer {
             }
 
             match line.type_ {
-                LineType::Undefined => panic!("Error"),
+                LineType::Undefined => {
+                    panic!(format!("Line {} cannot be parsed", &current_line - 1))
+                }
                 LineType::Text => {
                     self.push_to_output("|");
                 }
@@ -282,7 +308,9 @@ impl Writer {
     }
 
     fn push_to_output(&mut self, text: &str) {
+        // Add processed line to the output
         self.output.push_str(&text);
+        // Increase current index
         self.index += &text.len();
     }
 }

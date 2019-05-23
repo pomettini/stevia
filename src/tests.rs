@@ -41,9 +41,19 @@ fn test_parse_text_line_one() {
     assert_eq!(reader.lines[0].type_, LineType::Text);
 }
 
-// #[test]
+#[test]
 fn test_parse_text_line_one_space() {
     SETUP_READER!(reader, r#" Hello world"#);
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].text, "Hello world");
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
+fn test_parse_text_line_one_multiple_spaces() {
+    SETUP_READER!(reader, r#"   Hello world"#);
 
     assert_eq!(reader.lines.len(), 1);
 
@@ -57,6 +67,23 @@ fn test_parse_text_line_two() {
         reader,
         r#"Hello world
 Ciao mondo"#
+    );
+
+    assert_eq!(reader.lines.len(), 2);
+
+    assert_eq!(reader.lines[0].text, "Hello world");
+    assert_eq!(reader.lines[1].text, "Ciao mondo");
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+    assert_eq!(reader.lines[1].type_, LineType::Text);
+}
+
+#[test]
+fn test_parse_text_line_two_spaces() {
+    SETUP_READER!(
+        reader,
+        r#" Hello world
+    Ciao mondo"#
     );
 
     assert_eq!(reader.lines.len(), 2);
@@ -218,7 +245,7 @@ fn test_parse_end_one() {
     assert_eq!(reader.lines[0].type_, LineType::End);
 }
 
-// #[test]
+#[test]
 fn test_parse_end_one_space() {
     SETUP_READER!(reader, r#" ->  END"#);
 
@@ -500,7 +527,7 @@ CONST CIAO = \"Mondo\"",
     assert_eq!(writer.constants["CIAO"], "Mondo");
 }
 
-// #[test]
+#[test]
 fn test_writer_declare_constants_one_space() {
     SETUP_WRITER!("CONST  HELLO  =  \"World\"", reader, writer);
 
@@ -511,9 +538,20 @@ fn test_writer_declare_constants_one_space() {
     assert_eq!(writer.constants["HELLO"], "World");
 }
 
-// #[test]
+#[test]
 fn test_writer_declare_constants_two_space() {
     SETUP_WRITER!(" CONST  HELLO  =  \"World\"", reader, writer);
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Constant);
+
+    assert_eq!(writer.constants["HELLO"], "World");
+}
+
+#[test]
+fn test_writer_declare_constants_two_space_multiple() {
+    SETUP_WRITER!(" CONST  HELLO  =  \" World \"", reader, writer);
 
     assert_eq!(writer.index, 0);
 

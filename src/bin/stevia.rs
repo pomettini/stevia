@@ -69,16 +69,8 @@ mod tests {
             .output()
             .unwrap();
 
-        assert_eq!(String::from_utf8_lossy(&output.stdout), "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;");
+        let text_output = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
+
+        assert_eq!(String::from_utf8_lossy(&output.stdout), text_output);
     }
-
-    // #[test]
-    // fn test_functional_process_file_red() {
-    //     let output = Command::new("./target/debug/stevia")
-    //         .arg("examples/examples.ink")
-    //         .output()
-    //         .unwrap();
-
-    //     assert_eq!(String::from_utf8_lossy(&output.stdout), "");
-    // }
 }
