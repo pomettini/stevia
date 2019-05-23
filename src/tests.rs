@@ -62,6 +62,16 @@ fn test_parse_text_line_one_multiple_spaces() {
 }
 
 #[test]
+fn test_parse_text_line_contains_const() {
+    SETUP_READER!(reader, r#"Hello world CONST"#);
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].text, "Hello world CONST");
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
 fn test_parse_text_line_two() {
     SETUP_READER!(
         reader,
@@ -447,10 +457,34 @@ fn test_writer_bookmark_position_zero_one() {
 }
 
 #[test]
+fn test_writer_bookmark_position_zero_one_spaces() {
+    SETUP_WRITER!(" ===  hello", reader, writer);
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(writer.symbols["hello"], 0);
+}
+
+#[test]
 fn test_writer_bookmark_position_zero_two() {
     SETUP_WRITER!(
         "=== hello
 === world",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(writer.symbols["hello"], 0);
+    assert_eq!(writer.symbols["world"], 0);
+}
+
+#[test]
+fn test_writer_bookmark_position_zero_two_spaces() {
+    SETUP_WRITER!(
+        "   ===     hello
+    ===     world",
         reader,
         writer
     );

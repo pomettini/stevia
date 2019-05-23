@@ -96,9 +96,7 @@ impl Reader {
 
             match char_ {
                 b'a'...b'z' | b'A'...b'Z' | 0...9 => {
-                    let re_text = Regex::new(r"CONST").unwrap();
-
-                    if re_text.is_match(&line.text) {
+                    if line.text.starts_with("CONST") {
                         line.type_ = LineType::Constant;
                     } else {
                         line.type_ = LineType::Text;

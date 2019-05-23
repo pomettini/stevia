@@ -6,6 +6,7 @@ extern crate stevia;
 use clap::*;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 use stevia::*;
 
 fn main() {
@@ -15,7 +16,7 @@ fn main() {
         .arg(Arg::with_name("file").index(1).required(true))
         .get_matches();
 
-    let path = matches.value_of("file").unwrap();
+    let path = Path::new(matches.value_of("file").unwrap());
 
     let mut file = File::open(path).expect("File not found");
     let mut contents = String::new();
@@ -28,7 +29,16 @@ fn main() {
     let mut writer = Writer::new();
     writer.process_lines(&reader);
 
-    print!("{}", writer.output);
+    // TODO: Needs refactor urgently
+    let mut output_file = File::create(format!(
+        "{}.stevia",
+        path.file_stem().unwrap().to_str().unwrap()
+    ))
+    .expect("Cannot create output file");
+
+    output_file
+        .write_all(&writer.output.as_bytes())
+        .expect("Cannot write file content");
 }
 
 mod tests {
@@ -40,6 +50,8 @@ mod tests {
         let output = Command::new("./target/debug/stevia").output().unwrap();
 
         assert!(output.stderr.len() > 0);
+
+        clean();
     }
 
     #[test]
@@ -49,7 +61,9 @@ mod tests {
             .output()
             .unwrap();
 
-        assert!(output.stdout.len() > 0);
+        assert!(output.stderr.len() == 0);
+
+        clean();
     }
 
     #[test]
@@ -60,6 +74,8 @@ mod tests {
             .unwrap();
 
         assert!(output.stderr.len() > 0);
+
+        clean();
     }
 
     #[test]
@@ -69,8 +85,29 @@ mod tests {
             .output()
             .unwrap();
 
-        let text_output = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
+        let expected_output = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
 
-        assert_eq!(String::from_utf8_lossy(&output.stdout), text_output);
+        let output = Command::new("cat")
+            .arg("example.stevia")
+            .output()
+            .expect("Cannot find .stevia file");
+
+        assert_eq!(String::from_utf8_lossy(&output.stdout), expected_output);
+
+        clean();
+    }
+
+    fn clean() {
+        let output = Command::new("find")
+            .arg(".")
+            .arg("-name")
+            .arg("*.stevia")
+            .arg("-delete")
+            .output()
+            .unwrap();
+
+        // println!("status: {}", output.status);
+        // println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+        // println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
     }
 }
