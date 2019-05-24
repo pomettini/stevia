@@ -9,6 +9,7 @@ os:
   - osx
 cache: cargo
 script:
+  - cargo clean
   - cargo build
   - cargo test
   - cargo test --bin stevia
