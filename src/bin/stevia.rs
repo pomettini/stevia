@@ -87,8 +87,8 @@ mod tests {
     #[test]
     fn test_functional_process_file_green() {
         clean();
-        
-        let output = Command::new("./target/debug/stevia")
+
+        let _output = Command::new("./target/debug/stevia")
             .arg("examples/example.ink")
             .output()
             .unwrap();
@@ -105,8 +105,9 @@ mod tests {
         clean();
     }
 
+    #[allow(dead_code)]
     fn clean() {
-        let output = Command::new("find")
+        Command::new("find")
             .arg(".")
             .arg("-name")
             .arg("*.stevia")
