@@ -47,6 +47,8 @@ mod tests {
 
     #[test]
     fn test_load_no_argument() {
+        clean();
+
         let output = Command::new("./target/debug/stevia").output().unwrap();
 
         assert!(output.stderr.len() > 0);
@@ -56,6 +58,8 @@ mod tests {
 
     #[test]
     fn test_load_file() {
+        clean();
+
         let output = Command::new("./target/debug/stevia")
             .arg("examples/example.ink")
             .output()
@@ -68,6 +72,8 @@ mod tests {
 
     #[test]
     fn test_load_non_existent_file() {
+        clean();
+
         let output = Command::new("./target/debug/stevia")
             .arg("examples/examples.ink")
             .output()
@@ -80,6 +86,8 @@ mod tests {
 
     #[test]
     fn test_functional_process_file_green() {
+        clean();
+        
         let output = Command::new("./target/debug/stevia")
             .arg("examples/example.ink")
             .output()
