@@ -5,7 +5,8 @@ extern crate regex;
 use regex::Regex;
 use std::collections::*;
 
-pub mod tests;
+pub mod reader_tests;
+pub mod writer_tests;
 
 // Priority:
 // TODO: Document the format
