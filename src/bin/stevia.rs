@@ -42,6 +42,8 @@ fn main() {
 }
 
 mod tests {
+    use std::env;
+    use std::fs;
     #[allow(unused_imports)]
     use std::process::Command;
 
@@ -93,14 +95,11 @@ mod tests {
             .output()
             .unwrap();
 
-        let expected_output = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
+        let expected = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
 
-        let output = Command::new("cat")
-            .arg("example.stevia")
-            .output()
-            .expect("Cannot find .stevia file");
+        let contents = fs::read_to_string("example.stevia").expect("Cannot find .stevia file");
 
-        assert_eq!(String::from_utf8_lossy(&output.stdout), expected_output);
+        assert_eq!(contents, expected);
 
         clean();
     }
