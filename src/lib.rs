@@ -11,11 +11,11 @@ pub mod tests;
 // TODO: Document the format
 // Secondary:
 // TODO: Add a way to load/manage/change backgrounds
-// TODO: Add punctuation
 // TODO: Add a way to test all the branches automatically
 // TODO: Add a test executable (GGEZ?)
 // TODO: Export the .h file for GBA
 // TODO: Implement jumps
+// TODO: Implement multi line comments
 
 #[derive(Debug, PartialEq)]
 pub enum LineType {
@@ -24,6 +24,7 @@ pub enum LineType {
     Question,
     Bookmark,
     Constant,
+    Comment,
     End,
 }
 
@@ -104,6 +105,7 @@ impl Reader {
                 }
                 b'+' => line.type_ = LineType::Question,
                 b'=' => line.type_ = LineType::Bookmark,
+                b'/' => line.type_ = LineType::Comment,
                 // TODO: Must check between END and JUMP
                 b'-' => {
                     let re_text = Regex::new(r"\s?+->\s+?END").unwrap();
@@ -266,6 +268,7 @@ impl Writer {
                     // Insert constant to table
                     self.constants.insert(const_name, const_value);
                 }
+                LineType::Comment => {}
                 LineType::End => {
                     self.push_to_output("E;");
                 }
@@ -296,6 +299,7 @@ impl Writer {
                 }
                 LineType::Bookmark => (),
                 LineType::Constant => (),
+                LineType::Comment => (),
                 LineType::End => {
                     self.push_to_output("|");
                 }

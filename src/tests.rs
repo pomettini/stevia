@@ -247,6 +247,57 @@ fn test_parse_bookmark_two() {
 }
 
 #[test]
+fn test_parse_comment_one() {
+    SETUP_READER!(reader, "// Hello world");
+
+    assert_eq!(reader.lines.len(), 1);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+}
+
+#[test]
+fn test_parse_comment_two() {
+    SETUP_READER!(
+        reader,
+        "// Hello world
+// Ciao mondo"
+    );
+
+    assert_eq!(reader.lines.len(), 2);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+    assert_eq!(reader.lines[1].type_, LineType::Comment);
+}
+
+#[test]
+fn test_parse_comment_two_spaces() {
+    SETUP_READER!(
+        reader,
+        " //  Hello world
+ //  Ciao mondo"
+    );
+
+    assert_eq!(reader.lines.len(), 2);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+    assert_eq!(reader.lines[1].type_, LineType::Comment);
+}
+
+#[test]
+fn test_parse_comment_and_text() {
+    SETUP_READER!(
+        reader,
+        "// Hello world
+Ciao mondo"
+    );
+
+    assert_eq!(reader.lines.len(), 2);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+    assert_eq!(reader.lines[1].type_, LineType::Text);
+}
+
+#[test]
 fn test_parse_end_one() {
     SETUP_READER!(reader, r#"-> END"#);
 
@@ -633,6 +684,53 @@ Hello {HELLO} Ciao {CIAO}",
 
     assert_eq!(writer.constants["HELLO"], "World");
     assert_eq!(writer.constants["CIAO"], "Mondo");
+}
+
+#[test]
+fn test_writer_comment_one() {
+    SETUP_WRITER!("// Hello world", reader, writer);
+
+    assert_eq!(writer.output, "");
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+}
+
+#[test]
+fn test_writer_comment_two() {
+    SETUP_WRITER!(
+        "// Hello world
+// Ciao mondo",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.output, "");
+
+    assert_eq!(writer.index, 0);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+    assert_eq!(reader.lines[1].type_, LineType::Comment);
+}
+
+#[test]
+fn test_writer_comment_and_text() {
+    SETUP_WRITER!(
+        "// Hello world
+// Ciao mondo
+Bonjour monde",
+        reader,
+        writer
+    );
+
+    assert_eq!(writer.output, "P;Bonjour monde");
+
+    assert_eq!(writer.index, 15);
+
+    assert_eq!(reader.lines[0].type_, LineType::Comment);
+    assert_eq!(reader.lines[1].type_, LineType::Comment);
+    assert_eq!(reader.lines[2].type_, LineType::Text);
 }
 
 // --- FUNCTIONAL TESTS ---
