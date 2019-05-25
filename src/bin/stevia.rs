@@ -44,7 +44,6 @@ fn main() {
 mod tests {
     use std::env;
     use std::fs;
-    #[allow(unused_imports)]
     use std::process::Command;
 
     #[test]
@@ -90,7 +89,7 @@ mod tests {
     fn test_functional_process_file_green() {
         clean();
 
-        let _output = Command::new("./target/debug/stevia")
+        Command::new("./target/debug/stevia")
             .arg("examples/example.ink")
             .output()
             .unwrap();
