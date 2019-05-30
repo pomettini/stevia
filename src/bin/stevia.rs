@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "clippy", allow(clippy_pedantic))]
-
+extern crate assert_cmd;
 extern crate clap;
 extern crate stevia;
 
@@ -42,64 +41,41 @@ fn main() {
 }
 
 mod tests {
-    use std::env;
+    use assert_cmd::prelude::*;
     use std::fs;
     use std::process::Command;
 
     #[test]
     fn test_load_no_argument() {
-        clean();
-
-        let output = Command::new("./target/debug/stevia").output().unwrap();
-
-        assert!(output.stderr.len() > 0);
-
+        let mut cmd = Command::cargo_bin("stevia").unwrap();
+        cmd.assert().failure();
         clean();
     }
 
     #[test]
     fn test_load_file() {
-        clean();
-
-        let output = Command::new("./target/debug/stevia")
-            .arg("examples/example.ink")
-            .output()
-            .unwrap();
-
-        assert!(output.stderr.len() == 0);
-
+        let mut cmd = Command::cargo_bin("stevia").unwrap();
+        cmd.arg("examples/example.ink");
+        cmd.assert().success();
         clean();
     }
 
     #[test]
     fn test_load_non_existent_file() {
-        clean();
-
-        let output = Command::new("./target/debug/stevia")
-            .arg("examples/examples.ink")
-            .output()
-            .unwrap();
-
-        assert!(output.stderr.len() > 0);
-
+        let mut cmd = Command::cargo_bin("stevia").unwrap();
+        cmd.arg("examples/nonexistent.ink");
+        cmd.assert().failure();
         clean();
     }
 
     #[test]
     fn test_functional_process_file_green() {
-        clean();
-
-        Command::new("./target/debug/stevia")
-            .arg("examples/example.ink")
-            .output()
-            .unwrap();
-
+        let mut cmd = Command::cargo_bin("stevia").unwrap();
+        cmd.arg("examples/example.ink").assert().success();
+        // Check contents of output file
         let expected = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
-
         let contents = fs::read_to_string("example.stevia").expect("Cannot find .stevia file");
-
-        assert_eq!(contents, expected);
-
+        assert_eq!(expected, contents);
         clean();
     }
 
@@ -111,10 +87,5 @@ mod tests {
             .arg("*.stevia")
             .arg("-delete")
             .output()
-            .unwrap();
-
-        // println!("status: {}", output.status);
-        // println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-        // println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-    }
+            .unwrap();    }
 }
