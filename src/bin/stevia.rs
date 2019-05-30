@@ -42,40 +42,52 @@ fn main() {
 
 mod tests {
     use assert_cmd::prelude::*;
-    use std::fs;
+    use std::fs::*;
     use std::process::Command;
 
     #[test]
     fn test_load_no_argument() {
-        let mut cmd = Command::cargo_bin("stevia").unwrap();
-        cmd.assert().failure();
+        Command::cargo_bin("stevia").unwrap().assert().failure();
+
         clean();
     }
 
     #[test]
     fn test_load_file() {
-        let mut cmd = Command::cargo_bin("stevia").unwrap();
-        cmd.arg("examples/example.ink");
-        cmd.assert().success();
+        Command::cargo_bin("stevia")
+            .unwrap()
+            .arg("examples/example.ink")
+            .assert()
+            .success();
+
         clean();
     }
 
     #[test]
     fn test_load_non_existent_file() {
-        let mut cmd = Command::cargo_bin("stevia").unwrap();
-        cmd.arg("examples/nonexistent.ink");
-        cmd.assert().failure();
+        Command::cargo_bin("stevia")
+            .unwrap()
+            .arg("examples/nonexistent.ink")
+            .assert()
+            .failure();
+
         clean();
     }
 
     #[test]
     fn test_functional_process_file_green() {
-        let mut cmd = Command::cargo_bin("stevia").unwrap();
-        cmd.arg("examples/example.ink").assert().success();
+        Command::cargo_bin("stevia")
+            .unwrap()
+            .arg("examples/example.ink")
+            .assert()
+            .success();
+
         // Check contents of output file
         let expected = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
-        let contents = fs::read_to_string("example.stevia").expect("Cannot find .stevia file");
+        let contents = read_to_string("example.stevia").expect("Cannot find .stevia file");
+
         assert_eq!(expected, contents);
+
         clean();
     }
 
@@ -87,5 +99,6 @@ mod tests {
             .arg("*.stevia")
             .arg("-delete")
             .output()
-            .unwrap();    }
+            .unwrap();
+    }
 }
