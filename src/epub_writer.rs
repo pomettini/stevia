@@ -1,27 +1,32 @@
 extern crate epub_builder;
+extern crate image;
 
 use self::epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
-use regex::Regex;
-
-use crate::reader::*;
+use self::image::*;
 
 #[derive(Default)]
 pub struct EpubWriter {
     pub title: String,
     pub author: String,
+    pub cover_path: String,
 }
 
 impl EpubWriter {
-    pub fn new(title: &str, author: &str) -> Self {
+    pub fn new(title: &str, author: &str, cover_path: &str) -> Self {
         Self {
             title: title.to_string(),
             author: author.to_string(),
+            cover_path: cover_path.to_string(),
         }
     }
 
     // TODO: Handle errors
     pub fn generate(&self) -> Option<Vec<u8>> {
-        let image = "Not really a PNG image";
+        let image = image::open(&self.cover_path).unwrap();
+
+        let mut jpg = Vec::new();
+        image.write_to(&mut jpg, JPEG).unwrap();
+
         let css = "";
 
         let mut epub: Vec<u8> = Vec::new();
@@ -34,10 +39,10 @@ impl EpubWriter {
             .unwrap()
             .stylesheet(css.as_bytes())
             .unwrap()
-            .add_cover_image("cover.jpg", image.as_bytes(), "image/jpg")
+            .add_cover_image("cover.jpg", jpg.as_slice(), "image/jpg")
             .unwrap()
             .add_content(
-                EpubContent::new("cover.xhtml", self.cover_builder().as_bytes())
+                EpubContent::new("cover.xhtml", self.cover_builder(image.height(), image.width()).as_bytes())
                     .title("Cover")
                     .reftype(ReferenceType::Cover),
             )
@@ -72,7 +77,7 @@ impl EpubWriter {
         Some(epub)
     }
 
-    pub fn cover_builder(&self) -> String {
+    pub fn cover_builder(&self, height: u32, width: u32) -> String {
         format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="no" ?><html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>Cover</title>
@@ -84,12 +89,12 @@ impl EpubWriter {
 </head>
 <body>
     <div>
-        <svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" width="100%" viewBox="0 0 548 800" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <image height="800" width="548" xlink:href="cover.jpg"/>
+        <svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 {width} {height}" width="100%" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <image height="{height}" width="{width}" xlink:href="{filename}"/>
         </svg>
     </div>
 </body>
-</html>"#)
+</html>"#, height = height, width = width, filename = "cover.jpg")
     }
 
     pub fn title_builder(&self) -> String {

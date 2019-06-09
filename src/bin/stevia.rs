@@ -51,15 +51,12 @@ fn main() {
         Some("epub") => {
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
-            let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini");
+            let epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
             let epub = epub_writer.generate();
 
-            match epub {
-                Some(contents) => {
-                    let mut file = File::create(format!("{}.epub", file_name)).unwrap();
-                    file.write_all(&contents).unwrap();
-                }
-                None => (),
+            if let Some(contents) = epub {
+                let mut file = File::create(format!("{}.epub", file_name)).unwrap();
+                file.write_all(&contents).unwrap();
             }
         }
         _ => (),
