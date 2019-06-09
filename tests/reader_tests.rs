@@ -1,5 +1,6 @@
-#[allow(unused_imports)]
-use super::*;
+extern crate stevia;
+
+use stevia::reader::*;
 
 #[allow(unused_macros)]
 macro_rules! SETUP_READER {

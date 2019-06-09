@@ -6,7 +6,8 @@ use clap::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use stevia::*;
+use stevia::reader::Reader;
+use stevia::writer::Writer;
 
 fn main() {
     let matches = App::new("stevia")
