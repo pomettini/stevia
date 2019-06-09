@@ -49,17 +49,14 @@ fn main() {
                 .expect("Cannot write file content");
         }
         Some("epub") => {
-            let mut epub_writer = EpubWriter::new();
+            let file_name = path.file_stem().unwrap().to_str().unwrap();
+
+            let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini");
             let epub = epub_writer.generate();
 
             match epub {
                 Some(contents) => {
-                    let mut file = File::create(format!(
-                        "{}.epub",
-                        path.file_stem().unwrap().to_str().unwrap()
-                    ))
-                    .unwrap();
-
+                    let mut file = File::create(format!("{}.epub", file_name)).unwrap();
                     file.write_all(&contents).unwrap();
                 }
                 None => (),
