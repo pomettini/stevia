@@ -10,7 +10,8 @@ use stevia::epub_writer::EpubWriter;
 use stevia::reader::Reader;
 use stevia::writer::Writer;
 
-// Launch exporter with ./target/debug/stevia ./examples/example.ink epub
+// Launch exporter with
+// ./target/debug/stevia ./examples/example.ink epub
 
 fn main() {
     let matches = App::new("stevia")
@@ -49,7 +50,20 @@ fn main() {
         }
         Some("epub") => {
             let mut epub_writer = EpubWriter::new();
-            epub_writer.generate();
+            let epub = epub_writer.generate();
+
+            match epub {
+                Some(contents) => {
+                    let mut file = File::create(format!(
+                        "{}.epub",
+                        path.file_stem().unwrap().to_str().unwrap()
+                    ))
+                    .unwrap();
+
+                    file.write_all(&contents).unwrap();
+                }
+                None => (),
+            }
         }
         _ => (),
     }
@@ -61,6 +75,8 @@ mod tests {
     #[allow(unused_imports)]
     use std::fs::*;
     use std::process::Command;
+
+    // TODO: Program needs to be compiled before running functional tests
 
     #[test]
     fn test_load_no_argument() {
