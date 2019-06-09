@@ -16,7 +16,7 @@ fn main() {
         .arg(Arg::with_name("file").index(1).required(true))
         .get_matches();
 
-    let path = Path::new(matches.value_of("file").unwrap());
+    let path = Path::new(matches.value_of("file").expect("Missing file argument"));
 
     let mut file = File::open(path).expect("File not found");
     let mut contents = String::new();
@@ -37,12 +37,14 @@ fn main() {
     .expect("Cannot create output file");
 
     output_file
-        .write_all(&writer.output.as_bytes())
+        .write_all(writer.output.as_bytes())
         .expect("Cannot write file content");
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use assert_cmd::prelude::*;
+    #[allow(unused_imports)]
     use std::fs::*;
     use std::process::Command;
 
@@ -100,6 +102,6 @@ mod tests {
             .arg("*.stevia")
             .arg("-delete")
             .output()
-            .unwrap();
+            .expect("Clean command failed");
     }
 }

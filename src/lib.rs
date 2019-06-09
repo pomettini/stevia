@@ -10,8 +10,5 @@ extern crate regex;
 // TODO: Implement jumps
 // TODO: Implement multi line comments
 
-use reader::{LineType, Reader};
-use writer::Writer;
-
 pub mod reader;
 pub mod writer;
