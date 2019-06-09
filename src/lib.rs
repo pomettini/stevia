@@ -10,5 +10,6 @@ extern crate regex;
 // TODO: Implement jumps
 // TODO: Implement multi line comments
 
+pub mod epub_writer;
 pub mod reader;
 pub mod writer;

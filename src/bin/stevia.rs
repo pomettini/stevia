@@ -6,17 +6,22 @@ use clap::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use stevia::epub_writer::EpubWriter;
 use stevia::reader::Reader;
 use stevia::writer::Writer;
+
+// Launch exporter with ./target/debug/stevia ./examples/example.ink epub
 
 fn main() {
     let matches = App::new("stevia")
         .version("0.1")
         .author("Giorgio Pomettini <giorgio.pomettini@gmail.com>")
         .arg(Arg::with_name("file").index(1).required(true))
+        .arg(Arg::with_name("export-format").index(2))
         .get_matches();
 
     let path = Path::new(matches.value_of("file").expect("Missing file argument"));
+    let export_format = matches.value_of("export-format");
 
     let mut file = File::open(path).expect("File not found");
     let mut contents = String::new();
@@ -26,19 +31,28 @@ fn main() {
     let mut reader = Reader::from_text(&contents);
     reader.parse_all_lines();
 
-    let mut writer = Writer::new();
-    writer.process_lines(&reader);
+    match export_format {
+        None | Some("stevia") => {
+            let mut writer = Writer::new();
+            writer.process_lines(&reader);
 
-    // TODO: Needs refactor urgently
-    let mut output_file = File::create(format!(
-        "{}.stevia",
-        path.file_stem().unwrap().to_str().unwrap()
-    ))
-    .expect("Cannot create output file");
+            // TODO: Needs refactor urgently
+            let mut output_file = File::create(format!(
+                "{}.stevia",
+                path.file_stem().unwrap().to_str().unwrap()
+            ))
+            .expect("Cannot create output file");
 
-    output_file
-        .write_all(writer.output.as_bytes())
-        .expect("Cannot write file content");
+            output_file
+                .write_all(writer.output.as_bytes())
+                .expect("Cannot write file content");
+        }
+        Some("epub") => {
+            let mut epub_writer = EpubWriter::new();
+            epub_writer.generate();
+        }
+        _ => (),
+    }
 }
 
 mod tests {
