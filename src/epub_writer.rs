@@ -39,7 +39,7 @@ impl EpubWriter {
             .unwrap()
             .stylesheet(css.as_bytes())
             .unwrap()
-            .add_cover_image("cover.jpg", jpg.as_slice(), "image/jpg")
+            .add_cover_image("cover.jpg", jpg.as_slice(), "image/jpeg")
             .unwrap()
             .add_content(
                 EpubContent::new("cover.xhtml", self.cover_builder(image.height(), image.width()).as_bytes())
