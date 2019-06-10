@@ -4,11 +4,17 @@ extern crate image;
 use self::epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
 use self::image::*;
 
+use crate::reader::*;
+use regex::Regex;
+use std::collections::*;
+
 #[derive(Default)]
 pub struct EpubWriter {
     pub title: String,
     pub author: String,
     pub cover_path: String,
+    pub constants: HashMap<String, String>,
+    pub page_content: Vec<String>,
 }
 
 impl EpubWriter {
@@ -17,6 +23,32 @@ impl EpubWriter {
             title: title.to_string(),
             author: author.to_string(),
             cover_path: cover_path.to_string(),
+            constants: HashMap::new(),
+            page_content: Vec::new(),
+        }
+    }
+
+    pub fn process_lines(&mut self, input: &Reader) {
+        let mut current_page: usize = 0;
+
+        // Put an empty string to the first index of the vector
+        self.page_content.push(String::new());
+
+        for (current_line, line) in input.lines.iter().enumerate() {
+            match line.type_ {
+                LineType::Undefined => panic!(format!("Line {} cannot be parsed", &current_line)),
+                LineType::Text => {
+                    self.page_content[current_page].push_str(&format!("<p>{}</p>", &line.text));
+                }
+                LineType::Question => {}
+                LineType::Bookmark => {
+                    self.page_content.push(String::new());
+                    current_page += 1;
+                }
+                LineType::Constant => {}
+                LineType::Comment => {}
+                LineType::End => {}
+            }
         }
     }
 
@@ -31,48 +63,60 @@ impl EpubWriter {
 
         let mut epub: Vec<u8> = Vec::new();
 
-        EpubBuilder::new(ZipLibrary::new().unwrap())
-            .unwrap()
+        // Init Epub builder
+        let mut builder = EpubBuilder::new(ZipLibrary::new().unwrap()).unwrap();
+
+        // Add metadata
+        builder
             .metadata("author", self.author.clone())
             .unwrap()
             .metadata("title", self.title.clone())
-            .unwrap()
-            .stylesheet(css.as_bytes())
-            .unwrap()
+            .unwrap();
+
+        // Add stylesheet
+        builder.stylesheet(css.as_bytes()).unwrap();
+
+        // Add cover image
+        builder
             .add_cover_image("cover.jpg", jpg.as_slice(), "image/jpeg")
-            .unwrap()
+            .unwrap();
+
+        // Add cover file
+        builder
             .add_content(
-                EpubContent::new("cover.xhtml", self.cover_builder(image.height(), image.width()).as_bytes())
-                    .title("Cover")
-                    .reftype(ReferenceType::Cover),
+                EpubContent::new(
+                    "cover.xhtml",
+                    self.cover_builder(image.height(), image.width()).as_bytes(),
+                )
+                .title("Cover")
+                .reftype(ReferenceType::Cover),
             )
-            .unwrap()
+            .unwrap();
+
+        // Add title file
+        builder
             .add_content(
                 EpubContent::new("title.xhtml", self.title_builder().as_bytes())
                     .title("Title")
                     .reftype(ReferenceType::TitlePage),
             )
-            .unwrap()
-            .add_content(
-                EpubContent::new(
-                    "chapter_1.xhtml",
-                    self.page_builder("<p>Hello world</p>").as_bytes(),
-                )
-                .title("Chapter 1")
-                .reftype(ReferenceType::Text),
-            )
-            .unwrap()
-            .add_content(
-                EpubContent::new(
-                    "chapter_2.xhtml",
-                    self.page_builder("<p>Ciao mondo</p>").as_bytes(),
-                )
-                .title("Chapter 2")
-                .reftype(ReferenceType::Text),
-            )
-            .unwrap()
-            .generate(&mut epub)
             .unwrap();
+
+        // Add page file
+        for (counter, page) in self.page_content.iter().enumerate() {
+            builder
+                .add_content(
+                    EpubContent::new(
+                        format!("chapter_{}.xhtml", &counter),
+                        self.page_builder(page).as_bytes(),
+                    )
+                    .title(format!("Chapter {}", &counter))
+                    .reftype(ReferenceType::Text),
+                )
+                .unwrap();
+        }
+
+        builder.generate(&mut epub).unwrap();
 
         Some(epub)
     }
