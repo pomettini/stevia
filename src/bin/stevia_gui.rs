@@ -1,8 +1,4 @@
 #[rustfmt::skip]
-extern crate stevia;
-#[rustfmt::skip]
-extern crate iui;
-#[rustfmt::skip]
 use iui::prelude::*;
 #[rustfmt::skip]
 use iui::controls::*;
@@ -13,11 +9,11 @@ use stevia::reader::*;
 #[rustfmt::skip]
 use stevia::writer::*;
 #[rustfmt::skip]
+use stevia::epub_writer::*;
+#[rustfmt::skip]
 use std::fs::File;
 #[rustfmt::skip]
 use std::io::prelude::*;
-#[rustfmt::skip]
-use std::fs::read_to_string;
 #[rustfmt::skip]
 use std::cell::RefCell;
 #[rustfmt::skip]
@@ -43,7 +39,7 @@ fn main() {
     let ui = UI::init().expect("Couldn't initialize UI library");
     let mut win = Window::new(&ui, "Stevia GUI", 320, 480, WindowType::NoMenubar);
 
-    let mut multiline_entry = MultilineEntry::new(&ui);
+    let multiline_entry = MultilineEntry::new(&ui);
     let mut log_ctx = LogContext {
         ui: &ui,
         entry: multiline_entry.clone(),
@@ -58,7 +54,7 @@ fn main() {
         let win = win.clone();
         let export_format = export_format.clone();
         move |_| {
-            if &*export_format.borrow() == &None {
+            if *export_format.borrow() == None {
                 win.modal_err(&ui, "Warning", "Please select an export file format");
                 return;
             }
@@ -151,7 +147,7 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
                     file
                 }
                 Err(_) => {
-                    log(ctx, "Cannot create output file");
+                    log(ctx, "Cannot create the output file");
                     return;
                 }
             };
@@ -173,16 +169,48 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
 
             log(ctx, "Needs to be implemented!");
 
-            // let file_name = path.file_stem().unwrap().to_str().unwrap();
+            // TODO: Needs refactor urgently
+            let file_name = path.file_stem().unwrap().to_str().unwrap();
 
-            // let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
-            // epub_writer.process_lines(&reader);
-            // let epub = epub_writer.generate();
+            log(ctx, "Started parsing");
 
-            // if let Some(contents) = epub {
-            //     let mut file = File::create(format!("{}.epub", file_name)).unwrap();
-            //     file.write_all(&contents).unwrap();
+            // TODO: Remove hardcoded values
+            let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
+            epub_writer.process_lines(&reader);
 
+            match epub_writer.generate() {
+                Some(contents) => {
+                    log(ctx, "Completed parsing");
+                    contents
+                }
+                None => {
+                    log(ctx, "Cannot parse the Ink file");
+                    return;
+                }
+            };
+
+            let mut file = match File::create(format!("{}.epub", file_name)) {
+                Ok(f) => {
+                    log(ctx, "Created output file");
+                    f
+                }
+                Err(_) => {
+                    log(ctx, "Cannot create the output file");
+                    return;
+                }
+            };
+
+            match file.write_all(&contents.as_bytes()) {
+                Ok(_) => {
+                    log(ctx, "Written to ePub file");
+                }
+                Err(_) => {
+                    log(ctx, "Cannot write to ePub file");
+                    return;
+                }
+            }
+
+            log(ctx, "ePub exporting completed");
         }
     }
 }

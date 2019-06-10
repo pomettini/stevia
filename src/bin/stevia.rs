@@ -1,7 +1,3 @@
-extern crate assert_cmd;
-extern crate clap;
-extern crate stevia;
-
 use clap::*;
 use std::fs::File;
 use std::io::prelude::*;
