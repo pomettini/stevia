@@ -41,7 +41,7 @@ fn main() {
     let export_format: Rc<RefCell<Option<ExportFormat>>> = Rc::new(RefCell::new(None));
 
     let ui = UI::init().expect("Couldn't initialize UI library");
-    let mut win = Window::new(&ui, "Stevia GUI", 480, 480, WindowType::NoMenubar);
+    let mut win = Window::new(&ui, "Stevia GUI", 320, 480, WindowType::NoMenubar);
 
     let mut multiline_entry = MultilineEntry::new(&ui);
     let mut log_ctx = LogContext {

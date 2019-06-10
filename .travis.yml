@@ -15,6 +15,11 @@ matrix:
     - rust: beta
     - rust: nightly
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y cmake
+  - sudo apt-get install -y libgtk-3-dev
+
 before_cache: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
     RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f
