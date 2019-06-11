@@ -31,6 +31,35 @@ enum ExportFormat {
     Epub,
 }
 
+macro_rules! match_or_return {
+    ($condition:ident, $ctx:ident, $success:expr, $fail:expr) => {
+        match $condition {
+            Ok(_) => {
+                log($ctx, $success);
+            }
+            Err(_) => {
+                log($ctx, $fail);
+                return;
+            }
+        };
+    };
+}
+
+macro_rules! unwrap_or_return {
+    ($condition:ident, $ctx:ident, $success:expr, $fail:expr) => {
+        match $condition {
+            Ok(result) => {
+                log($ctx, $success);
+                result
+            }
+            Err(_) => {
+                log($ctx, $fail);
+                return;
+            }
+        };
+    };
+}
+
 fn main() {
     // Wrapped with Interior Mutability Pattern
     // Because I need to pass the state around between UI controls
@@ -60,7 +89,7 @@ fn main() {
             }
 
             let file = match win.open_file(&ui) {
-                Some(f) => f,
+                Some(file_) => file_,
                 None => return,
             };
 
@@ -101,27 +130,11 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
     clear_log(ctx);
 
     let file = File::open(path.clone());
-    let mut file = match file {
-        Ok(f) => {
-            log(ctx, "File loaded");
-            f
-        }
-        Err(_) => {
-            log(ctx, "Cannot load the file");
-            return;
-        }
-    };
+    let mut file = unwrap_or_return!(file, ctx, "File loaded", "Cannot load the file");
 
     let mut contents = String::new();
-    match file.read_to_string(&mut contents) {
-        Ok(_) => {
-            log(ctx, "File read");
-        }
-        Err(_) => {
-            log(ctx, "Cannot read the file");
-            return;
-        }
-    };
+    let file_contents = file.read_to_string(&mut contents);
+    match_or_return!(file_contents, ctx, "File read", "Cannot read the file");
 
     log(ctx, "Started parsing");
 
@@ -188,9 +201,9 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             };
 
             let mut file = match File::create(format!("{}.epub", file_name)) {
-                Ok(f) => {
+                Ok(file_) => {
                     log(ctx, "Created output file");
-                    f
+                    file_
                 }
                 Err(_) => {
                     log(ctx, "Cannot create the output file");
