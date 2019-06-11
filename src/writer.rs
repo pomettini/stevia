@@ -124,7 +124,7 @@ impl Writer {
                     self.index += 5;
                 }
                 LineType::Bookmark => {
-                    // Remove equal and white spaces
+                    // Remove equal characters and white spaces
                     let chars_to_trim: &[char] = &['=', ' '];
 
                     // Add the new string to the symbols
@@ -189,12 +189,10 @@ impl Writer {
                         self.push_to_output("|");
                     }
                 }
-                LineType::Bookmark => (),
-                LineType::Constant => (),
-                LineType::Comment => (),
                 LineType::End => {
                     self.push_to_output("|");
                 }
+                _ => (),
             }
 
             self.replace_branch_table();

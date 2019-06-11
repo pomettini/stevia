@@ -13,8 +13,9 @@ pub struct EpubWriter {
     pub title: String,
     pub author: String,
     pub cover_path: String,
-    pub constants: HashMap<String, String>,
     pub page_content: Vec<String>,
+    pub bookmark_table: HashMap<String, usize>,
+    pub constants: HashMap<String, String>,
 }
 
 impl EpubWriter {
@@ -23,13 +24,35 @@ impl EpubWriter {
             title: title.to_string(),
             author: author.to_string(),
             cover_path: cover_path.to_string(),
-            constants: HashMap::new(),
             page_content: Vec::new(),
+            bookmark_table: HashMap::new(),
+            constants: HashMap::new(),
+        }
+    }
+
+    pub fn process_bookmark_table(&mut self, input: &Reader) {
+        let mut current_page: usize = 0;
+
+        for line in &input.lines {
+            if line.type_ == LineType::Bookmark {
+                current_page += 1;
+
+                // Remove equal characters and white spaces
+                let chars_to_trim: &[char] = &['=', ' '];
+
+                // Add the new string to the symbols
+                let trimmed_string: &str = line.text.trim_matches(chars_to_trim);
+
+                self.bookmark_table
+                    .insert(trimmed_string.to_string(), current_page);
+            }
         }
     }
 
     pub fn process_lines(&mut self, input: &Reader) {
         let mut current_page: usize = 0;
+
+        self.process_bookmark_table(input);
 
         // Put an empty string to the first index of the vector
         self.page_content.push(String::new());
@@ -40,14 +63,48 @@ impl EpubWriter {
                 LineType::Text => {
                     self.page_content[current_page].push_str(&format!("<p>{}</p>", &line.text));
                 }
-                LineType::Question => {}
+                // TODO: Implement questions
+                LineType::Question => {
+                    // Check between brackets
+                    let re_text = Regex::new(r"\[(.*?)\]")
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get key of question while parsing at line {}",
+                                &current_line
+                            )
+                        });
+
+                    // Check after arrow
+                    let re_jump = Regex::new(r"\->\s+(.*)$")
+                        .unwrap()
+                        .captures(&line.text)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Cannot get value of question while parsing at line {}",
+                                &current_line
+                            )
+                        });
+
+                    let title = re_text[1].to_string();
+                    let page = format!(
+                        "chapter_{}.xhtml",
+                        self.bookmark_table[&re_jump[1].to_string()]
+                    );
+
+                    self.page_content[current_page]
+                        .push_str(&format!("<p><a href=\"{}\">{}</a></p>", page, title));
+                }
                 LineType::Bookmark => {
                     self.page_content.push(String::new());
                     current_page += 1;
                 }
+                // TODO: Implement constants
                 LineType::Constant => {}
-                LineType::Comment => {}
+                // TODO: Implement end
                 LineType::End => {}
+                _ => (),
             }
         }
     }
