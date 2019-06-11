@@ -31,7 +31,7 @@ enum ExportFormat {
     Epub,
 }
 
-macro_rules! match_or_return {
+macro_rules! evaluate_or_return {
     ($condition:ident, $ctx:ident, $success:expr, $fail:expr) => {
         match $condition {
             Ok(_) => {
@@ -134,7 +134,7 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
 
     let mut contents = String::new();
     let file_contents = file.read_to_string(&mut contents);
-    match_or_return!(file_contents, ctx, "File read", "Cannot read the file");
+    evaluate_or_return!(file_contents, ctx, "File read", "Cannot read the file");
 
     log(ctx, "Started parsing");
 
@@ -154,26 +154,21 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             // TODO: Needs refactor urgently
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
-            let mut output_file = match File::create(format!("{}.stevia", &file_name)) {
-                Ok(file) => {
-                    log(ctx, "Created output file");
-                    file
-                }
-                Err(_) => {
-                    log(ctx, "Cannot create the output file");
-                    return;
-                }
-            };
+            let file_create_result = File::create(format!("{}.stevia", &file_name));
+            unwrap_or_return!(
+                file_create_result,
+                ctx,
+                "Created output file",
+                "Cannot create the output file"
+            );
 
-            match output_file.write_all(writer.output.as_bytes()) {
-                Ok(_) => {
-                    log(ctx, "Written to Stevia file");
-                }
-                Err(_) => {
-                    log(ctx, "Cannot write to Stevia file");
-                    return;
-                }
-            }
+            let file_write_result = file.write_all(writer.output.as_bytes());
+            evaluate_or_return!(
+                file_write_result,
+                ctx,
+                "Written to Stevia file",
+                "Cannot write to Stevia file"
+            );
 
             log(ctx, "Stevia exporting completed");
         }
@@ -189,7 +184,8 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
             epub_writer.process_lines(&reader);
 
-            let epub = match epub_writer.generate() {
+            let epub_writer_result = epub_writer.generate();
+            let epub = match epub_writer_result {
                 Some(contents) => {
                     log(ctx, "Completed parsing");
                     contents
@@ -200,26 +196,21 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
                 }
             };
 
-            let mut file = match File::create(format!("{}.epub", file_name)) {
-                Ok(file_) => {
-                    log(ctx, "Created output file");
-                    file_
-                }
-                Err(_) => {
-                    log(ctx, "Cannot create the output file");
-                    return;
-                }
-            };
+            let file_create_result = File::create(format!("{}.epub", file_name));
+            unwrap_or_return!(
+                file_create_result,
+                ctx,
+                "Created output file",
+                "Cannot create the output file"
+            );
 
-            match file.write_all(&epub) {
-                Ok(_) => {
-                    log(ctx, "Written to ePub file");
-                }
-                Err(_) => {
-                    log(ctx, "Cannot write to ePub file");
-                    return;
-                }
-            }
+            let file_write_result = file.write_all(&epub);
+            evaluate_or_return!(
+                file_write_result,
+                ctx,
+                "Written to ePub file",
+                "Cannot write to ePub file"
+            );
 
             log(ctx, "ePub exporting completed");
         }
