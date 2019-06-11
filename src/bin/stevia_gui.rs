@@ -167,8 +167,6 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
         Some(ExportFormat::Epub) => {
             log(ctx, "Started exporting to ePub");
 
-            log(ctx, "Needs to be implemented!");
-
             // TODO: Needs refactor urgently
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
@@ -178,7 +176,7 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
             epub_writer.process_lines(&reader);
 
-            match epub_writer.generate() {
+            let epub = match epub_writer.generate() {
                 Some(contents) => {
                     log(ctx, "Completed parsing");
                     contents
@@ -200,7 +198,7 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
                 }
             };
 
-            match file.write_all(&contents.as_bytes()) {
+            match file.write_all(&epub) {
                 Ok(_) => {
                     log(ctx, "Written to ePub file");
                 }
