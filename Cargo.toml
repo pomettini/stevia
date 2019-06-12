@@ -12,3 +12,4 @@ escargot = ">=0.5"
 epub-builder = ">=0.4"
 image = ">=0.21.2"
 iui = { git = "https://github.com/rust-native-ui/libui-rs.git" }
+maplit = ">=1.0.1"

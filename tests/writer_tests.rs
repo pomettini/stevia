@@ -22,6 +22,8 @@ macro_rules! SETUP_SYMBOLS {
     };
 }
 
+// --- TEXT ---
+
 #[test]
 fn test_writer_print_one() {
     SETUP_WRITER!("Hello world", reader, writer);
@@ -59,6 +61,8 @@ Bonjour monde"#,
 
     assert_eq!(writer.index, 42);
 }
+
+// --- QUESTIONS ---
 
 #[test]
 fn test_writer_question_fake_jump_one() {
@@ -166,6 +170,8 @@ Ciao mondo
     assert_eq!(writer.symbols["sample"], 51);
 }
 
+// --- END ---
+
 #[test]
 fn test_writer_end_one() {
     SETUP_WRITER!("-> END", reader, writer);
@@ -188,6 +194,8 @@ fn test_writer_end_two() {
 
     assert_eq!(writer.index, 16);
 }
+
+// --- BOOKMARKS ---
 
 #[test]
 fn test_writer_bookmark_position_zero_one() {
@@ -273,6 +281,8 @@ Bonjour monde",
     assert_eq!(writer.symbols["hello"], 14);
     assert_eq!(writer.symbols["world"], 27);
 }
+
+// --- CONSTANTS ---
 
 #[test]
 fn test_writer_declare_constants_one() {
@@ -377,6 +387,8 @@ Hello {HELLO} Ciao {CIAO}",
     assert_eq!(writer.constants["CIAO"], "Mondo");
 }
 
+// --- COMMENTS ---
+
 #[test]
 fn test_writer_comment_one() {
     SETUP_WRITER!("// Hello world", reader, writer);
@@ -446,6 +458,11 @@ Do you like it?
     );
 
     assert_eq!(writer.index, 71);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+    assert_eq!(reader.lines[1].type_, LineType::Text);
+    assert_eq!(reader.lines[2].type_, LineType::Text);
+    assert_eq!(reader.lines[3].type_, LineType::End);
 }
 
 #[test]
@@ -484,4 +501,16 @@ Oh, I see
 
     assert_eq!(writer.branch_table["like"], vec![87]);
     assert_eq!(writer.branch_table["hate"], vec![114]);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+    assert_eq!(reader.lines[1].type_, LineType::Text);
+    assert_eq!(reader.lines[2].type_, LineType::Text);
+    assert_eq!(reader.lines[3].type_, LineType::Question);
+    assert_eq!(reader.lines[4].type_, LineType::Question);
+    assert_eq!(reader.lines[5].type_, LineType::Bookmark);
+    assert_eq!(reader.lines[6].type_, LineType::Text);
+    assert_eq!(reader.lines[7].type_, LineType::End);
+    assert_eq!(reader.lines[8].type_, LineType::Bookmark);
+    assert_eq!(reader.lines[9].type_, LineType::Text);
+    assert_eq!(reader.lines[10].type_, LineType::End);
 }
