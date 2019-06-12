@@ -50,8 +50,8 @@ fn main() {
             // TODO: Remove hardcoded values
             let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
             epub_writer.process_lines(&reader);
-            let epub = epub_writer.generate();
 
+            let epub = epub_writer.generate();
             if let Some(contents) = epub {
                 let mut file = File::create(format!("{}.epub", file_name)).unwrap();
                 file.write_all(&contents).unwrap();

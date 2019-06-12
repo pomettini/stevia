@@ -37,8 +37,8 @@ macro_rules! evaluate_or_return {
             Ok(_) => {
                 log($ctx, $success);
             }
-            Err(_) => {
-                log($ctx, $fail);
+            Err(fail) => {
+                log($ctx, &format!("{}: {}", $fail, fail));
                 return;
             }
         };
@@ -52,8 +52,8 @@ macro_rules! unwrap_or_return {
                 log($ctx, $success);
                 result
             }
-            Err(_) => {
-                log($ctx, $fail);
+            Err(fail) => {
+                log($ctx, &format!("{}: {}", $fail, fail));
                 return;
             }
         };
@@ -66,7 +66,7 @@ fn main() {
     let export_format: Rc<RefCell<Option<ExportFormat>>> = Rc::new(RefCell::new(None));
 
     let ui = UI::init().expect("Couldn't initialize UI library");
-    let mut win = Window::new(&ui, "Stevia GUI", 320, 480, WindowType::NoMenubar);
+    let mut win = Window::new(&ui, "Stevia GUI", 380, 480, WindowType::NoMenubar);
 
     let multiline_entry = MultilineEntry::new(&ui);
     let mut log_ctx = LogContext {
@@ -155,14 +155,14 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
             let file_create_result = File::create(format!("{}.stevia", &file_name));
-            unwrap_or_return!(
+            let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,
                 "Created output file",
                 "Cannot create the output file"
             );
 
-            let file_write_result = file.write_all(writer.output.as_bytes());
+            let file_write_result = file_output.write_all(writer.output.as_bytes());
             evaluate_or_return!(
                 file_write_result,
                 ctx,
@@ -197,14 +197,14 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
             };
 
             let file_create_result = File::create(format!("{}.epub", file_name));
-            unwrap_or_return!(
+            let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,
                 "Created output file",
                 "Cannot create the output file"
             );
 
-            let file_write_result = file.write_all(&epub);
+            let file_write_result = file_output.write_all(&epub);
             evaluate_or_return!(
                 file_write_result,
                 ctx,
