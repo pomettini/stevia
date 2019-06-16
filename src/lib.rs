@@ -11,5 +11,6 @@ extern crate regex;
 // TODO: Implement multi line comments
 
 pub mod epub_writer;
+pub mod gui;
 pub mod reader;
 pub mod writer;
