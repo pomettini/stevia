@@ -1,22 +1,12 @@
-#[rustfmt::skip]
 use iui::prelude::*;
-#[rustfmt::skip]
 use iui::controls::*;
-#[rustfmt::skip]
-use std::path::PathBuf;
-#[rustfmt::skip]
+use std::path::{Path, PathBuf};
 use stevia::reader::*;
-#[rustfmt::skip]
 use stevia::writer::*;
-#[rustfmt::skip]
 use stevia::epub_writer::*;
-#[rustfmt::skip]
 use std::fs::File;
-#[rustfmt::skip]
 use std::io::prelude::*;
-#[rustfmt::skip]
 use std::cell::RefCell;
-#[rustfmt::skip]
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -29,6 +19,17 @@ struct LogContext<'a> {
 enum ExportFormat {
     Stevia,
     Epub,
+}
+
+struct State<'a> {
+    export_format: Option<ExportFormat>,
+    title: String,
+    author: String,
+    cover: Option<&'a Path>,
+}
+
+impl<'a> State<'a> {
+    fn update(&mut self) {}
 }
 
 macro_rules! evaluate_or_return {
@@ -63,7 +64,12 @@ macro_rules! unwrap_or_return {
 fn main() {
     // Wrapped with Interior Mutability Pattern
     // Because I need to pass the state around between UI controls
-    let export_format: Rc<RefCell<Option<ExportFormat>>> = Rc::new(RefCell::new(None));
+    let state: Rc<RefCell<State>> = Rc::new(RefCell::new(State {
+        export_format: None,
+        title: String::new(),
+        author: String::new(),
+        cover: None,
+    }));
 
     let ui = UI::init().expect("Couldn't initialize UI library");
     let mut win = Window::new(&ui, "Stevia GUI", 380, 480, WindowType::NoMenubar);
@@ -74,6 +80,93 @@ fn main() {
         entry: multiline_entry.clone(),
     };
 
+    let mut export_grid = LayoutGrid::new(&ui);
+    export_grid.set_padded(&ui, true);
+    export_grid.hide(&ui);
+
+    let (mut title_entry, mut author_entry, mut cover_entry_button) = {
+        // Entries
+        let title = Entry::new(&ui);
+        let author = Entry::new(&ui);
+        let cover = Button::new(&ui, "Please select the cover file");
+
+        // Labels
+        export_grid.append(
+            &ui,
+            Label::new(&ui, "Ebook title:"),
+            0,
+            0,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        export_grid.append(
+            &ui,
+            Label::new(&ui, "Ebook author:"),
+            0,
+            1,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        export_grid.append(
+            &ui,
+            Label::new(&ui, "Ebook cover:"),
+            0,
+            2,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        // Entries
+        export_grid.append(
+            &ui,
+            title.clone(),
+            1,
+            0,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        export_grid.append(
+            &ui,
+            author.clone(),
+            1,
+            1,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        export_grid.append(
+            &ui,
+            cover.clone(),
+            1,
+            2,
+            1,
+            1,
+            GridExpand::Both,
+            GridAlignment::Fill,
+            GridAlignment::Fill,
+        );
+
+        (title, author, cover)
+    };
+
     let mut program_vbox = VerticalBox::new(&ui);
     program_vbox.set_padded(&ui, true);
 
@@ -81,9 +174,9 @@ fn main() {
     button.on_clicked(&ui, {
         let ui = ui.clone();
         let win = win.clone();
-        let export_format = export_format.clone();
+        let state = state.clone();
         move |_| {
-            if *export_format.borrow() == None {
+            if state.borrow().export_format == None {
                 win.modal_err(&ui, "Warning", "Please select an export file format");
                 return;
             }
@@ -93,7 +186,8 @@ fn main() {
                 None => return,
             };
 
-            process(&mut log_ctx, &*export_format.borrow(), file);
+
+            process(&mut log_ctx, &state.borrow(), file);
         }
     });
     program_vbox.append(&ui, button, LayoutStrategy::Compact);
@@ -104,21 +198,31 @@ fn main() {
     file_format_cb.append(&ui, "ePub");
     file_format_cb.set_selected(&ui, 0);
     file_format_cb.clone().on_selected(&ui, {
+        let ui = ui.clone();
+        let mut export_grid = export_grid.clone();
         move |index| {
+            // TODO: Must refactor
             match index {
-                // TODO: Must refactor
-                0 => *export_format.borrow_mut() = None,
-                1 => *export_format.borrow_mut() = Some(ExportFormat::Stevia),
-                2 => *export_format.borrow_mut() = Some(ExportFormat::Epub),
-                _ => *export_format.borrow_mut() = None,
+                0 => state.borrow_mut().export_format = None,
+                1 => state.borrow_mut().export_format = Some(ExportFormat::Stevia),
+                2 => state.borrow_mut().export_format = Some(ExportFormat::Epub),
+                _ => state.borrow_mut().export_format = None,
+            }
+
+            // If Epub is selected show export controls
+            if index == 2 {
+                export_grid.show(&ui);
+            } else {
+                export_grid.hide(&ui);
             }
         }
     });
 
     program_vbox.append(&ui, file_format_cb, LayoutStrategy::Compact);
 
-    program_vbox.append(&ui, HorizontalSeparator::new(&ui), LayoutStrategy::Compact);
+    program_vbox.append(&ui, export_grid, LayoutStrategy::Compact);
 
+    program_vbox.append(&ui, HorizontalSeparator::new(&ui), LayoutStrategy::Compact);
     program_vbox.append(&ui, multiline_entry, LayoutStrategy::Stretchy);
 
     win.set_child(&ui, program_vbox);
@@ -126,7 +230,7 @@ fn main() {
     ui.main();
 }
 
-fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: PathBuf) {
+fn process(ctx: &mut LogContext, state: &State, path: PathBuf) {
     clear_log(ctx);
 
     let file = File::open(path.clone());
@@ -143,7 +247,7 @@ fn process(ctx: &mut LogContext, export_format: &Option<ExportFormat>, path: Pat
 
     log(ctx, "Completed parsing");
 
-    match export_format {
+    match state.export_format {
         None => (),
         Some(ExportFormat::Stevia) => {
             log(ctx, "Started exporting to Stevia");
