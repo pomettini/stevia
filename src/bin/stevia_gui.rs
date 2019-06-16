@@ -29,7 +29,11 @@ struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    fn update(&mut self) {}
+    pub fn update(&mut self, ui: &UI, title: &Entry, author: &Entry, cover: Option<&'a Path>) {
+        self.title = title.value(ui);
+        self.author = author.value(ui);
+        self.cover = cover;
+    }
 }
 
 macro_rules! evaluate_or_return {
@@ -84,7 +88,7 @@ fn main() {
     export_grid.set_padded(&ui, true);
     export_grid.hide(&ui);
 
-    let (mut title_entry, mut author_entry, mut cover_entry_button) = {
+    let (title_entry, author_entry, cover_entry_button) = {
         // Entries
         let title = Entry::new(&ui);
         let author = Entry::new(&ui);
@@ -175,6 +179,8 @@ fn main() {
         let ui = ui.clone();
         let win = win.clone();
         let state = state.clone();
+        let title_entry = title_entry.clone();
+        let author_entry = author_entry.clone();
         move |_| {
             if state.borrow().export_format == None {
                 win.modal_err(&ui, "Warning", "Please select an export file format");
@@ -186,6 +192,9 @@ fn main() {
                 None => return,
             };
 
+            state
+                .borrow_mut()
+                .update(&ui, &title_entry, &author_entry, None);
 
             process(&mut log_ctx, &state.borrow(), file);
         }
@@ -279,13 +288,33 @@ fn process(ctx: &mut LogContext, state: &State, path: PathBuf) {
         Some(ExportFormat::Epub) => {
             log(ctx, "Started exporting to ePub");
 
+            let cover_path;
+
+            if state.title.is_empty() {
+                log(ctx, "Please enter the title");
+                return;
+            }
+
+            if state.author.is_empty() {
+                log(ctx, "Please enter the author");
+                return;
+            }
+
+            if state.cover.is_none() {
+                log(ctx, "No cover set, using the default one");
+                cover_path = Path::new("examples/cover.jpg");
+            } else {
+                cover_path = state.cover.unwrap();
+            }
+
             // TODO: Needs refactor urgently
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
             log(ctx, "Started parsing");
 
             // TODO: Remove hardcoded values
-            let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
+            let mut epub_writer =
+                EpubWriter::new(&state.title, &state.author, cover_path.to_str().unwrap());
             epub_writer.process_lines(&reader);
 
             let epub_writer_result = epub_writer.generate();
