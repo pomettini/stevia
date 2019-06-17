@@ -34,6 +34,7 @@ fn main() {
     cover_entry_button.on_clicked(&ui, {
         let ui = ui.clone();
         move |_| {
+            // TODO: Implement loading of cover image
             unimplemented!();
         }
     });
