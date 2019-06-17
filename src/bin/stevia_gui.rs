@@ -56,18 +56,12 @@ fn main() {
             // Ask the user for output file path
             let save_file_path = window.save_file(&ui);
 
-            // The output file path needs to have .stevia as file extension
-            let save_file_path = match save_file_path {
-                Some(path) => path.with_extension("stevia"),
-                None => return,
-            };
-
             // Passes all the information to the global state
             state
                 .borrow_mut()
-                .update(&ui, &title_entry, &author_entry, None, Some(save_file_path));
+                .update(&ui, &title_entry, &author_entry, None, save_file_path);
 
-            //Generate the output file
+            // Generate the output file
             process(&mut log_ctx, &state.borrow());
         }
     });

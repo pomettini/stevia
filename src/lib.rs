@@ -1,4 +1,5 @@
 extern crate regex;
+extern crate image;
 
 // Priority:
 // TODO: Document the format

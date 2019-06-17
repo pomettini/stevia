@@ -108,7 +108,8 @@ pub fn process(ctx: &mut LogContext, state: &State) {
             let mut writer = Writer::new();
             writer.process_lines(&reader);
 
-            let file_create_result = File::create(output_file);
+            // The output file path needs to have .stevia as file extension
+            let file_create_result = File::create(output_file.with_extension("stevia"));
             let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,
@@ -165,7 +166,8 @@ pub fn process(ctx: &mut LogContext, state: &State) {
                 }
             };
 
-            let file_create_result = File::create(output_file);
+            // The output file path needs to have .epub as file extension
+            let file_create_result = File::create(output_file.with_extension("epub"));
             let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,

@@ -1,8 +1,5 @@
-extern crate epub_builder;
-extern crate image;
-
-use self::epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
-use self::image::*;
+use epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
+use image::*;
 use crate::reader::*;
 use regex::Regex;
 use std::collections::*;
