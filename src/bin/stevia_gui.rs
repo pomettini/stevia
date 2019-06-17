@@ -8,6 +8,8 @@ fn main() {
     // Wrapped with Interior Mutability Pattern
     // Because I need to pass the state around between UI controls
     let state: Rc<RefCell<State>> = Rc::new(RefCell::new(State {
+        input_file: None,
+        output_file: None,
         export_format: None,
         title: String::new(),
         author: String::new(),
@@ -15,7 +17,7 @@ fn main() {
     }));
 
     let ui = UI::init().expect("Couldn't initialize UI library");
-    let mut win = Window::new(&ui, "Stevia GUI", 380, 480, WindowType::NoMenubar);
+    let mut window = Window::new(&ui, "Stevia GUI", 380, 480, WindowType::NoMenubar);
 
     let multiline_entry = MultilineEntry::new(&ui);
     let mut log_ctx = LogContext {
@@ -38,32 +40,44 @@ fn main() {
     let mut program_vbox = VerticalBox::new(&ui);
     program_vbox.set_padded(&ui, true);
 
-    let mut button = Button::new(&ui, "Load Ink File");
-    button.on_clicked(&ui, {
+    let mut generate_button = Button::new(&ui, "Generate");
+    generate_button.on_clicked(&ui, {
         let ui = ui.clone();
-        let win = win.clone();
         let state = state.clone();
-        let title_entry = title_entry.clone();
-        let author_entry = author_entry.clone();
-        move |_| {
-            if state.borrow().export_format == None {
-                win.modal_err(&ui, "Warning", "Please select an export file format");
-                return;
-            }
-
-            let file = match win.open_file(&ui) {
-                Some(file_) => file_,
-                None => return,
-            };
+        move |button| {
+            // TODO: Ask the user a path to save file
 
             state
                 .borrow_mut()
                 .update(&ui, &title_entry, &author_entry, None);
 
-            process(&mut log_ctx, &state.borrow(), file);
+            process(&mut log_ctx, &state.borrow());
         }
     });
-    program_vbox.append(&ui, button, LayoutStrategy::Compact);
+    generate_button.hide(&ui);
+
+    let mut load_file_button = Button::new(&ui, "Load Ink File");
+    load_file_button.on_clicked(&ui, {
+        let ui = ui.clone();
+        let window = window.clone();
+        let mut generate_button = generate_button.clone();
+        let state = state.clone();
+        move |button| {
+            match window.open_file(&ui) {
+                Some(file) => {
+                    state.borrow_mut().input_file = Some(file.clone());
+                    let file_name = file.file_name().unwrap().to_str().unwrap();
+                    button.set_text(&ui, &format!("Loaded: {}", file_name));
+                    // Show generate button only if file is loaded
+                    generate_button.show(&ui);
+                }
+                None => {
+                    return;
+                }
+            };
+        }
+    });
+    program_vbox.append(&ui, load_file_button, LayoutStrategy::Compact);
 
     let mut file_format_cb = Combobox::new(&ui);
     file_format_cb.append(&ui, "Select export file format");
@@ -74,7 +88,7 @@ fn main() {
         let ui = ui.clone();
         let mut export_grid = export_grid.clone();
         move |index| {
-            // TODO: Must refactor
+            // FIXME: Must refactor
             match index {
                 0 => state.borrow_mut().export_format = None,
                 1 => state.borrow_mut().export_format = Some(ExportFormat::Stevia),
@@ -93,10 +107,13 @@ fn main() {
 
     program_vbox.append(&ui, file_format_cb, LayoutStrategy::Compact);
     program_vbox.append(&ui, export_grid, LayoutStrategy::Compact);
+    program_vbox.append(&ui, generate_button, LayoutStrategy::Compact);
+
     program_vbox.append(&ui, HorizontalSeparator::new(&ui), LayoutStrategy::Compact);
+
     program_vbox.append(&ui, multiline_entry, LayoutStrategy::Stretchy);
 
-    win.set_child(&ui, program_vbox);
-    win.show(&ui);
+    window.set_child(&ui, program_vbox);
+    window.show(&ui);
     ui.main();
 }

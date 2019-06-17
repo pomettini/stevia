@@ -23,7 +23,7 @@ impl Writer {
     }
 
     pub fn replace_branch_table(&mut self) {
-        // TODO: Needs refactor
+        // FIXME: Needs refactor
         for symbol in &self.symbols {
             if self.branch_table.contains_key::<str>(&symbol.0) {
                 for jump_place in self.branch_table.get::<str>(&symbol.0).unwrap() {

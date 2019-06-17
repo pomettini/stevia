@@ -33,7 +33,7 @@ fn main() {
             let mut writer = Writer::new();
             writer.process_lines(&reader);
 
-            // TODO: Needs refactor urgently
+            // FIXME: Needs refactor
             let mut output_file = File::create(format!(
                 "{}.stevia",
                 path.file_stem().unwrap().to_str().unwrap()

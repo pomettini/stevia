@@ -49,6 +49,8 @@ pub enum ExportFormat {
 }
 
 pub struct State<'a> {
+    pub input_file: Option<PathBuf>,
+    pub output_file: Option<PathBuf>,
     pub export_format: Option<ExportFormat>,
     pub title: String,
     pub author: String,
@@ -63,10 +65,15 @@ impl<'a> State<'a> {
     }
 }
 
-pub fn process(ctx: &mut LogContext, state: &State, path: PathBuf) {
+pub fn process(ctx: &mut LogContext, state: &State) {
     clear_log(ctx);
 
-    let file = File::open(path.clone());
+    let path = match &state.input_file {
+        Some(path) => path,
+        None => return,
+    };
+
+    let file = File::open(path);
     let mut file = unwrap_or_return!(file, ctx, "File loaded", "Cannot load the file");
 
     let mut contents = String::new();
