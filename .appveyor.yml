@@ -59,8 +59,8 @@ install:
 
 test_script:
     - cargo build
-    - cargo test
-    - cargo test --bin stevia
+    - RUST_TEST_THREADS=1 cargo test
+    - RUST_TEST_THREADS=1 cargo test --bin stevia
 
 build: false
 

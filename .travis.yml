@@ -28,7 +28,7 @@ before_cache: |
 script:
 - cargo clean
 - cargo build
-- cargo test
+- RUST_TEST_THREADS=1 cargo test
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
