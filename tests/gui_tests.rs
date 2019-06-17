@@ -3,6 +3,7 @@ extern crate stevia;
 use stevia::gui::*;
 use iui::prelude::*;
 use iui::controls::*;
+use std::process::Command;
 
 // Run with RUST_TEST_THREADS=1 cargo test
 
@@ -19,6 +20,16 @@ macro_rules! SETUP_UI_MULTILINE {
     };
 }
 
+#[allow(unused_macros)]
+macro_rules! FREE {
+    ($control:expr) => {
+        unsafe {
+            // Memory needs to be released, otherwise it will panic
+            Into::<Control>::into($control).destroy();
+        }
+    };
+}
+
 #[test]
 fn test_log_green() {
     SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
@@ -27,10 +38,7 @@ fn test_log_green() {
 
     let value = multiline_entry.value(&ui);
 
-    unsafe {
-        // Memory needs to be released, otherwise it will panic
-        Into::<Control>::into(multiline_entry).destroy();
-    }
+    FREE!(multiline_entry);
 
     assert_eq!(value, "Hello\n");
 }
@@ -43,17 +51,13 @@ fn test_log_red() {
 
     let value = multiline_entry.value(&ui);
 
-    unsafe {
-        // Memory needs to be released, otherwise it will panic
-        Into::<Control>::into(multiline_entry).destroy();
-    }
+    FREE!(multiline_entry);
 
     assert_ne!(value, "");
 }
 
 #[test]
-fn test_clear_log_green()
-{
+fn test_clear_log_green() {
     SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
 
     log(&mut log_ctx, "Hello");
@@ -62,17 +66,13 @@ fn test_clear_log_green()
 
     let value = multiline_entry.value(&ui);
 
-    unsafe {
-        // Memory needs to be released, otherwise it will panic
-        Into::<Control>::into(multiline_entry).destroy();
-    }
+    FREE!(multiline_entry);
 
     assert_eq!(value, "");
 }
 
 #[test]
-fn test_clear_log_red()
-{
+fn test_clear_log_red() {
     SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
 
     log(&mut log_ctx, "Hello");
@@ -81,10 +81,40 @@ fn test_clear_log_red()
 
     let value = multiline_entry.value(&ui);
 
-    unsafe {
-        // Memory needs to be released, otherwise it will panic
-        Into::<Control>::into(multiline_entry).destroy();
-    }
+    FREE!(multiline_entry);
 
     assert_ne!(value, "Hello");
+}
+
+#[test]
+fn test_stevia_functional() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: None,
+        output_file: None,
+        export_format: None,
+        title: String::new(),
+        author: String::new(),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    // TEST STUFF
+
+    clean();
+}
+
+#[allow(dead_code)]
+fn clean() {
+    Command::new("find")
+        .arg(".")
+        .arg("-name")
+        .arg("*.stevia")
+        .arg("-delete")
+        .output()
+        .expect("Clean command failed");
 }
