@@ -32,6 +32,7 @@ fn main() {
     let (title_entry, author_entry, mut cover_entry_button) =
         export_grid_init(&ui, &mut export_grid);
     cover_entry_button.on_clicked(&ui, {
+        let ui = ui.clone();
         move |_| {
             unimplemented!();
         }
@@ -43,14 +44,30 @@ fn main() {
     let mut generate_button = Button::new(&ui, "Generate");
     generate_button.on_clicked(&ui, {
         let ui = ui.clone();
+        let window = window.clone();
         let state = state.clone();
-        move |button| {
-            // TODO: Ask the user a path to save file
+        move |_| {
+            // You need to select an export format before exporting
+            if state.borrow().export_format == None {
+                window.modal_err(&ui, "Warning", "Please select an export file format");
+                return;
+            }
 
+            // Ask the user for output file path
+            let save_file_path = window.save_file(&ui);
+
+            // The output file path needs to have .stevia as file extension
+            let save_file_path = match save_file_path {
+                Some(path) => path.with_extension("stevia"),
+                None => return,
+            };
+
+            // Passes all the information to the global state
             state
                 .borrow_mut()
-                .update(&ui, &title_entry, &author_entry, None);
+                .update(&ui, &title_entry, &author_entry, None, Some(save_file_path));
 
+            //Generate the output file
             process(&mut log_ctx, &state.borrow());
         }
     });

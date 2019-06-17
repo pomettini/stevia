@@ -3,27 +3,26 @@ extern crate image;
 
 use self::epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
 use self::image::*;
-
 use crate::reader::*;
 use regex::Regex;
 use std::collections::*;
+use std::path::Path;
 
-#[derive(Default)]
-pub struct EpubWriter {
+pub struct EpubWriter<'a> {
     pub title: String,
     pub author: String,
-    pub cover_path: String,
+    pub cover_path: &'a Path,
     pub page_content: Vec<String>,
     pub bookmark_table: HashMap<String, usize>,
     pub constants: HashMap<String, String>,
 }
 
-impl EpubWriter {
-    pub fn new(title: &str, author: &str, cover_path: &str) -> Self {
+impl<'a> EpubWriter<'a> {
+    pub fn new(title: &str, author: &str, cover_path: &'a Path) -> Self {
         Self {
             title: title.to_string(),
             author: author.to_string(),
-            cover_path: cover_path.to_string(),
+            cover_path: cover_path,
             page_content: Vec::new(),
             bookmark_table: HashMap::new(),
             constants: HashMap::new(),

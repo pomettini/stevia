@@ -48,7 +48,8 @@ fn main() {
             let file_name = path.file_stem().unwrap().to_str().unwrap();
 
             // TODO: Remove hardcoded values
-            let mut epub_writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
+            let mut epub_writer =
+                EpubWriter::new("I love Rust", "Pomettini", Path::new("examples/cover.jpg"));
             epub_writer.process_lines(&reader);
 
             let epub = epub_writer.generate();

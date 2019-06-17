@@ -4,6 +4,7 @@ extern crate maplit;
 
 use stevia::epub_writer::*;
 use stevia::reader::*;
+use std::path::Path;
 
 #[allow(unused_macros)]
 macro_rules! SETUP_WRITER {
@@ -12,7 +13,8 @@ macro_rules! SETUP_WRITER {
         let mut $reader = Reader::from_text(input);
         $reader.parse_all_lines();
 
-        let mut $writer = EpubWriter::new("I love Rust", "Pomettini", "examples/cover.jpg");
+        let mut $writer =
+            EpubWriter::new("I love Rust", "Pomettini", Path::new("examples/cover.jpg"));
         $writer.process_lines(&$reader);
     };
 }

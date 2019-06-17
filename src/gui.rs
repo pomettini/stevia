@@ -58,22 +58,35 @@ pub struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    pub fn update(&mut self, ui: &UI, title: &Entry, author: &Entry, cover: Option<&'a Path>) {
+    pub fn update(
+        &mut self,
+        ui: &UI,
+        title: &Entry,
+        author: &Entry,
+        cover: Option<&'a Path>,
+        output_file: Option<PathBuf>,
+    ) {
         self.title = title.value(ui);
         self.author = author.value(ui);
         self.cover = cover;
+        self.output_file = output_file;
     }
 }
 
 pub fn process(ctx: &mut LogContext, state: &State) {
     clear_log(ctx);
 
-    let path = match &state.input_file {
+    let input_file = match &state.input_file {
         Some(path) => path,
         None => return,
     };
 
-    let file = File::open(path);
+    let output_file = match &state.output_file {
+        Some(path) => path,
+        None => return,
+    };
+
+    let file = File::open(input_file);
     let mut file = unwrap_or_return!(file, ctx, "File loaded", "Cannot load the file");
 
     let mut contents = String::new();
@@ -95,10 +108,7 @@ pub fn process(ctx: &mut LogContext, state: &State) {
             let mut writer = Writer::new();
             writer.process_lines(&reader);
 
-            // TODO: Needs refactor urgently
-            let file_name = path.file_stem().unwrap().to_str().unwrap();
-
-            let file_create_result = File::create(format!("{}.stevia", &file_name));
+            let file_create_result = File::create(output_file);
             let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,
@@ -138,14 +148,9 @@ pub fn process(ctx: &mut LogContext, state: &State) {
                 cover_path = state.cover.unwrap();
             }
 
-            // TODO: Needs refactor urgently
-            let file_name = path.file_stem().unwrap().to_str().unwrap();
-
             log(ctx, "Started parsing");
 
-            // TODO: Remove hardcoded values
-            let mut epub_writer =
-                EpubWriter::new(&state.title, &state.author, cover_path.to_str().unwrap());
+            let mut epub_writer = EpubWriter::new(&state.title, &state.author, cover_path);
             epub_writer.process_lines(&reader);
 
             let epub_writer_result = epub_writer.generate();
@@ -160,7 +165,7 @@ pub fn process(ctx: &mut LogContext, state: &State) {
                 }
             };
 
-            let file_create_result = File::create(format!("{}.epub", file_name));
+            let file_create_result = File::create(output_file);
             let mut file_output = unwrap_or_return!(
                 file_create_result,
                 ctx,
