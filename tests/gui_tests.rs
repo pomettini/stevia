@@ -4,6 +4,8 @@ use stevia::gui::*;
 use iui::prelude::*;
 use iui::controls::*;
 use std::process::Command;
+use std::path::{PathBuf};
+use std::fs::*;
 
 // Run with RUST_TEST_THREADS=1 cargo test
 
@@ -87,15 +89,15 @@ fn test_clear_log_red() {
 }
 
 #[test]
-fn test_stevia_functional() {
+fn test_stevia_functional_correct() {
     SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
 
     let state = State {
-        input_file: None,
-        output_file: None,
-        export_format: None,
-        title: String::new(),
-        author: String::new(),
+        input_file: Some(PathBuf::from(r"examples/example.ink")),
+        output_file: Some(PathBuf::from(r"examples/example.stevia")),
+        export_format: Some(ExportFormat::Stevia),
+        title: String::from("Hello world"),
+        author: String::from("Pomettini"),
         cover: None,
     };
 
@@ -103,7 +105,10 @@ fn test_stevia_functional() {
 
     FREE!(multiline_entry);
 
-    // TEST STUFF
+    let expected = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
+    let contents = read_to_string("examples/example.stevia").expect("Cannot find .stevia file");
+
+    assert_eq!(contents, expected);
 
     clean();
 }
