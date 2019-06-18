@@ -4,7 +4,7 @@ use stevia::gui::*;
 use iui::prelude::*;
 use iui::controls::*;
 use std::process::Command;
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use std::fs::*;
 
 // Run with RUST_TEST_THREADS=1 cargo test
@@ -89,6 +89,28 @@ fn test_clear_log_red() {
 }
 
 #[test]
+fn test_functional_no_export_format() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: Some(PathBuf::from(r"examples/example.ink")),
+        output_file: Some(PathBuf::from(r"examples/example.stevia")),
+        export_format: None,
+        title: String::from("Hello world"),
+        author: String::from("Pomettini"),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.stevia").exists(), false);
+
+    clean();
+}
+
+#[test]
 fn test_stevia_functional_correct() {
     SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
 
@@ -113,12 +135,131 @@ fn test_stevia_functional_correct() {
     clean();
 }
 
+#[test]
+fn test_stevia_functional_no_input_file() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: None,
+        output_file: Some(PathBuf::from(r"examples/example.stevia")),
+        export_format: Some(ExportFormat::Stevia),
+        title: String::from("Hello world"),
+        author: String::from("Pomettini"),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.stevia").exists(), false);
+
+    clean();
+}
+
+#[test]
+fn test_functional_epub_correct() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: Some(PathBuf::from(r"examples/example.ink")),
+        output_file: Some(PathBuf::from(r"examples/example.epub")),
+        export_format: Some(ExportFormat::Epub),
+        title: String::from("Hello world"),
+        author: String::from("Pomettini"),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.epub").exists(), true);
+
+    clean();
+}
+
+#[test]
+fn test_functional_epub_no_input_file() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: None,
+        output_file: Some(PathBuf::from(r"examples/example.epub")),
+        export_format: Some(ExportFormat::Epub),
+        title: String::from("Hello world"),
+        author: String::from("Pomettini"),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.epub").exists(), false);
+
+    clean();
+}
+
+#[test]
+fn test_functional_epub_no_title() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: Some(PathBuf::from(r"examples/example.ink")),
+        output_file: Some(PathBuf::from(r"examples/example.epub")),
+        export_format: Some(ExportFormat::Epub),
+        title: String::from(""),
+        author: String::from("Pomettini"),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.epub").exists(), false);
+
+    clean();
+}
+
+#[test]
+fn test_functional_epub_no_author() {
+    SETUP_UI_MULTILINE!(ui, log_ctx, multiline_entry);
+
+    let state = State {
+        input_file: Some(PathBuf::from(r"examples/example.ink")),
+        output_file: Some(PathBuf::from(r"examples/example.epub")),
+        export_format: Some(ExportFormat::Epub),
+        title: String::from("Hello world"),
+        author: String::from(""),
+        cover: None,
+    };
+
+    process(&mut log_ctx, &state);
+
+    FREE!(multiline_entry);
+
+    assert_eq!(Path::new("examples/example.epub").exists(), false);
+
+    clean();
+}
+
 #[allow(dead_code)]
 fn clean() {
+    // TODO: Merge clean commands
     Command::new("find")
         .arg(".")
         .arg("-name")
         .arg("*.stevia")
+        .arg("-delete")
+        .output()
+        .expect("Clean command failed");
+
+    Command::new("find")
+        .arg(".")
+        .arg("-name")
+        .arg("*.epub")
         .arg("-delete")
         .output()
         .expect("Clean command failed");
