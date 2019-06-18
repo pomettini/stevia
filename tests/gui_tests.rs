@@ -101,10 +101,11 @@ fn test_functional_no_export_format() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Err(()));
     assert_eq!(Path::new("examples/example.stevia").exists(), false);
 
     clean();
@@ -123,13 +124,14 @@ fn test_stevia_functional_correct() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
     let expected = "P;Hello there|P;I'm a VN written in the Ink format|P;Do you like it?|Q;Yes, I like it!;00120;No, I do not like it;00136|P;Thank you!|E;|P;Oh, I see|E;";
     let contents = read_to_string("examples/example.stevia").expect("Cannot find .stevia file");
 
+    assert_eq!(result, Ok(()));
     assert_eq!(contents, expected);
 
     clean();
@@ -148,10 +150,11 @@ fn test_stevia_functional_no_input_file() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Err(()));
     assert_eq!(Path::new("examples/example.stevia").exists(), false);
 
     clean();
@@ -170,10 +173,11 @@ fn test_functional_epub_correct() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Ok(()));
     assert_eq!(Path::new("examples/example.epub").exists(), true);
 
     clean();
@@ -192,10 +196,11 @@ fn test_functional_epub_no_input_file() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Err(()));
     assert_eq!(Path::new("examples/example.epub").exists(), false);
 
     clean();
@@ -214,10 +219,11 @@ fn test_functional_epub_no_title() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Err(()));
     assert_eq!(Path::new("examples/example.epub").exists(), false);
 
     clean();
@@ -236,10 +242,11 @@ fn test_functional_epub_no_author() {
         cover: None,
     };
 
-    process(&mut log_ctx, &state);
+    let result = process(&mut log_ctx, &state);
 
     FREE!(multiline_entry);
 
+    assert_eq!(result, Err(()));
     assert_eq!(Path::new("examples/example.epub").exists(), false);
 
     clean();

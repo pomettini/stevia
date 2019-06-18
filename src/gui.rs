@@ -15,7 +15,7 @@ macro_rules! evaluate_or_return {
             }
             Err(fail) => {
                 log($ctx, &format!("{}: {}", $fail, fail));
-                return;
+                return Err(());
             }
         };
     };
@@ -30,7 +30,7 @@ macro_rules! unwrap_or_return {
             }
             Err(fail) => {
                 log($ctx, &format!("{}: {}", $fail, fail));
-                return;
+                return Err(());
             }
         };
     };
@@ -73,17 +73,17 @@ impl<'a> State<'a> {
     }
 }
 
-pub fn process(ctx: &mut LogContext, state: &State) {
+pub fn process(ctx: &mut LogContext, state: &State) -> Result<(), ()> {
     clear_log(ctx);
 
     let input_file = match &state.input_file {
         Some(path) => path,
-        None => return,
+        None => return Err(()),
     };
 
     let output_file = match &state.output_file {
         Some(path) => path,
-        None => return,
+        None => return Err(()),
     };
 
     let file = File::open(input_file);
@@ -101,7 +101,7 @@ pub fn process(ctx: &mut LogContext, state: &State) {
     log(ctx, "Completed parsing");
 
     match state.export_format {
-        None => (),
+        None => return Err(()),
         Some(ExportFormat::Stevia) => {
             log(ctx, "Started exporting to Stevia");
 
@@ -134,12 +134,12 @@ pub fn process(ctx: &mut LogContext, state: &State) {
 
             if state.title.is_empty() {
                 log(ctx, "Please enter the title");
-                return;
+                return Err(());
             }
 
             if state.author.is_empty() {
                 log(ctx, "Please enter the author");
-                return;
+                return Err(());
             }
 
             if state.cover.is_none() {
@@ -162,7 +162,7 @@ pub fn process(ctx: &mut LogContext, state: &State) {
                 }
                 None => {
                     log(ctx, "Cannot parse the Ink file");
-                    return;
+                    return Err(());
                 }
             };
 
@@ -186,6 +186,8 @@ pub fn process(ctx: &mut LogContext, state: &State) {
             log(ctx, "ePub exporting completed");
         }
     }
+
+    Ok(())
 }
 
 pub fn log(ctx: &mut LogContext, message: &str) {

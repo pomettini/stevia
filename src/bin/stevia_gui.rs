@@ -63,7 +63,7 @@ fn main() {
                 .update(&ui, &title_entry, &author_entry, None, save_file_path);
 
             // Generate the output file
-            process(&mut log_ctx, &state.borrow());
+            let _ = process(&mut log_ctx, &state.borrow());
         }
     });
     generate_button.hide(&ui);
