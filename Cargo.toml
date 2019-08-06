@@ -9,7 +9,7 @@ regex = ">=1"
 clap = ">=2"
 assert_cmd = ">=0.11.1"
 escargot = ">=0.5"
-epub-builder = ">=0.4"
+epub-builder = { git = "https://github.com/lise-henry/epub-builder" }
 image = ">=0.21.2"
 iui = { git = "https://github.com/rust-native-ui/libui-rs.git" }
 maplit = ">=1.0.1"

@@ -45,7 +45,7 @@ impl Writer {
 
         for line in &input.lines {
             match line.type_ {
-                LineType::Undefined => panic!(format!("Line {} cannot be parsed", &current_line)),
+                LineType::Undefined => panic!(format!("Line {} cannot be parsed - content: {}", &current_line, &line.text)),
                 LineType::Text => {
                     let re_key = Regex::new(r"\{(?P<key>.*?)\}").unwrap();
 
