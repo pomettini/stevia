@@ -308,3 +308,51 @@ fn test_parse_end_two() {
     assert_eq!(reader.lines[0].type_, LineType::Text);
     assert_eq!(reader.lines[1].type_, LineType::End);
 }
+
+#[test]
+fn test_parse_text_quotation_marks() {
+    SETUP_READER!(
+        reader,
+        r#""What!""#
+    );
+
+    assert_eq!(reader.lines[0].text, r#""What!""#);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
+fn test_parse_text_apostrophe() {
+    SETUP_READER!(
+        reader,
+        r#"'What!'"#
+    );
+
+    assert_eq!(reader.lines[0].text, r#"'What!'"#);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
+fn test_parse_text_dots() {
+    SETUP_READER!(
+        reader,
+        r#"..."#
+    );
+
+    assert_eq!(reader.lines[0].text, r#"..."#);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}
+
+#[test]
+fn test_parse_text_dash() {
+    SETUP_READER!(
+        reader,
+        r#"-----"#
+    );
+
+    assert_eq!(reader.lines[0].text, r#"-----"#);
+
+    assert_eq!(reader.lines[0].type_, LineType::Text);
+}

@@ -61,16 +61,23 @@ impl Reader {
 
     fn check_lines_type(&mut self) {
         for line in &mut self.lines {
-            // If the line is empty exits (but it shouldn't happen)
+            // If the line is empty it exits (but it shouldn't happen)
             if line.text.is_empty() {
                 line.type_ = LineType::Undefined;
                 return;
             }
 
-            let char_ = line.text.as_bytes().get(0).unwrap();
+            let char_ = match line.text.as_bytes().get(0)
+            {
+                Some(c) => c,
+                None => {
+                    line.type_ = LineType::Undefined;
+                    return;
+                }
+            };
 
             match char_ {
-                b'a'..=b'z' | b'A'..=b'Z' | 0..=9 => {
+                b'a'..=b'z' | b'A'..=b'Z' | 0..=9 | b'"' | b'.' | b'\'' => {
                     if line.text.starts_with("CONST") {
                         line.type_ = LineType::Constant;
                     } else {
@@ -83,9 +90,12 @@ impl Reader {
                 // TODO: Must check between END and JUMP
                 b'-' => {
                     let re_text = Regex::new(r"\s?+->\s+?END").unwrap();
-
                     if re_text.is_match(&line.text) {
                         line.type_ = LineType::End;
+                    }
+                    else
+                    {
+                        line.type_ = LineType::Text;
                     }
                 }
                 _ => line.type_ = LineType::Undefined,
