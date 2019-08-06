@@ -19,7 +19,7 @@ impl<'a> EpubWriter<'a> {
         Self {
             title: title.to_string(),
             author: author.to_string(),
-            cover_path: cover_path,
+            cover_path,
             page_content: Vec::new(),
             bookmark_table: HashMap::new(),
             constants: HashMap::new(),

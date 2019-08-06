@@ -32,7 +32,7 @@ fn main() {
     let (title_entry, author_entry, mut cover_entry_button) =
         export_grid_init(&ui, &mut export_grid);
     cover_entry_button.on_clicked(&ui, {
-        let ui = ui.clone();
+        let _ui = ui.clone();
         move |_| {
             // TODO: Implement loading of cover image
             unimplemented!();
@@ -84,7 +84,7 @@ fn main() {
                     generate_button.show(&ui);
                 }
                 None => {
-                    return;
+                    
                 }
             };
         }

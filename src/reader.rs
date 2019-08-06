@@ -70,7 +70,7 @@ impl Reader {
             let char_ = line.text.as_bytes().get(0).unwrap();
 
             match char_ {
-                b'a'...b'z' | b'A'...b'Z' | 0...9 => {
+                b'a'..=b'z' | b'A'..=b'Z' | 0..=9 => {
                     if line.text.starts_with("CONST") {
                         line.type_ = LineType::Constant;
                     } else {
