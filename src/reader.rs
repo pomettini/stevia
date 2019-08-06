@@ -22,7 +22,7 @@ pub struct Reader {
 }
 
 impl Line {
-    pub fn new(text: String) -> Self {
+    pub const fn new(text: String) -> Self {
         Self {
             text,
             type_: LineType::Undefined,
@@ -67,13 +67,11 @@ impl Reader {
                 return;
             }
 
-            let char_ = match line.text.as_bytes().get(0)
-            {
-                Some(c) => c,
-                None => {
-                    line.type_ = LineType::Undefined;
-                    return;
-                }
+            let char_ = if let Some(c) = line.text.as_bytes().get(0) {
+                c
+            } else {
+                line.type_ = LineType::Undefined;
+                return;
             };
 
             match char_ {
@@ -92,9 +90,7 @@ impl Reader {
                     let re_text = Regex::new(r"\s?+->\s+?END").unwrap();
                     if re_text.is_match(&line.text) {
                         line.type_ = LineType::End;
-                    }
-                    else
-                    {
+                    } else {
                         line.type_ = LineType::Text;
                     }
                 }

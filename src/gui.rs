@@ -155,15 +155,12 @@ pub fn process(ctx: &mut LogContext, state: &State) -> Result<(), ()> {
             epub_writer.process_lines(&reader);
 
             let epub_writer_result = epub_writer.generate();
-            let epub = match epub_writer_result {
-                Some(contents) => {
-                    log(ctx, "Completed parsing");
-                    contents
-                }
-                None => {
-                    log(ctx, "Cannot parse the Ink file");
-                    return Err(());
-                }
+            let epub = if let Some(contents) = epub_writer_result {
+                log(ctx, "Completed parsing");
+                contents
+            } else {
+                log(ctx, "Cannot parse the Ink file");
+                return Err(());
             };
 
             // The output file path needs to have .epub as file extension
@@ -191,26 +188,26 @@ pub fn process(ctx: &mut LogContext, state: &State) -> Result<(), ()> {
 }
 
 pub fn log(ctx: &mut LogContext, message: &str) {
-    let mut content = ctx.entry.value(&ctx.ui);
-    content.push_str(&message);
+    let mut content = ctx.entry.value(ctx.ui);
+    content.push_str(message);
     content.push_str("\n");
-    ctx.entry.set_value(&ctx.ui, &content);
+    ctx.entry.set_value(ctx.ui, &content);
 }
 
 pub fn clear_log(ctx: &mut LogContext) {
-    ctx.entry.set_value(&ctx.ui, "");
+    ctx.entry.set_value(ctx.ui, "");
 }
 
 pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button) {
     // Entries
-    let title = Entry::new(&ui);
-    let author = Entry::new(&ui);
-    let cover = Button::new(&ui, "Please select the cover file");
+    let title = Entry::new(ui);
+    let author = Entry::new(ui);
+    let cover = Button::new(ui, "Please select the cover file");
 
     // Labels
     grid.append(
-        &ui,
-        Label::new(&ui, "Ebook title:"),
+        ui,
+        Label::new(ui, "Ebook title:"),
         0,
         0,
         1,
@@ -221,8 +218,8 @@ pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button
     );
 
     grid.append(
-        &ui,
-        Label::new(&ui, "Ebook author:"),
+        ui,
+        Label::new(ui, "Ebook author:"),
         0,
         1,
         1,
@@ -233,8 +230,8 @@ pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button
     );
 
     grid.append(
-        &ui,
-        Label::new(&ui, "Ebook cover:"),
+        ui,
+        Label::new(ui, "Ebook cover:"),
         0,
         2,
         1,
@@ -246,7 +243,7 @@ pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button
 
     // Entries
     grid.append(
-        &ui,
+        ui,
         title.clone(),
         1,
         0,
@@ -258,7 +255,7 @@ pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button
     );
 
     grid.append(
-        &ui,
+        ui,
         author.clone(),
         1,
         1,
@@ -270,7 +267,7 @@ pub fn export_grid_init(ui: &UI, grid: &mut LayoutGrid) -> (Entry, Entry, Button
     );
 
     grid.append(
-        &ui,
+        ui,
         cover.clone(),
         1,
         2,

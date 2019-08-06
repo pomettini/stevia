@@ -25,8 +25,8 @@ impl Writer {
     pub fn replace_branch_table(&mut self) {
         // FIXME: Needs refactor
         for symbol in &self.symbols {
-            if self.branch_table.contains_key::<str>(&symbol.0) {
-                for jump_place in self.branch_table.get::<str>(&symbol.0).unwrap() {
+            if self.branch_table.contains_key::<str>(symbol.0) {
+                for jump_place in self.branch_table.get::<str>(symbol.0).unwrap() {
                     // The jump should have leading zeros and have a length of five
                     // Example: 123 -> 00123
                     let text_to_replace = &format!("{:05}", symbol.1);
@@ -45,7 +45,10 @@ impl Writer {
 
         for line in &input.lines {
             match line.type_ {
-                LineType::Undefined => panic!(format!("Line {} cannot be parsed - content: {}", &current_line, &line.text)),
+                LineType::Undefined => panic!(format!(
+                    "Line {} cannot be parsed - content: {}",
+                    &current_line, &line.text
+                )),
                 LineType::Text => {
                     let re_key = Regex::new(r"\{(?P<key>.*?)\}").unwrap();
 
@@ -178,7 +181,7 @@ impl Writer {
                 LineType::Undefined => {
                     panic!(format!("Line {} cannot be parsed", &current_line - 1))
                 }
-                LineType::Text => {
+                LineType::Text | LineType::End => {
                     self.push_to_output("|");
                 }
                 LineType::Question => {
@@ -187,9 +190,6 @@ impl Writer {
                     } else {
                         self.push_to_output("|");
                     }
-                }
-                LineType::End => {
-                    self.push_to_output("|");
                 }
                 _ => (),
             }
@@ -200,7 +200,7 @@ impl Writer {
 
     fn push_to_output(&mut self, text: &str) {
         // Add processed line to the output
-        self.output.push_str(&text);
+        self.output.push_str(text);
         // Increase current index
         self.index += &text.len();
     }
