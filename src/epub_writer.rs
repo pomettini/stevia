@@ -110,7 +110,7 @@ impl<'a> EpubWriter<'a> {
         let image = image::open(&self.cover_path).unwrap();
 
         let mut jpg = Vec::new();
-        image.write_to(&mut jpg, JPEG).unwrap();
+        image.write_to(&mut jpg, ImageFormat::Jpeg).unwrap();
 
         let css = "";
 
