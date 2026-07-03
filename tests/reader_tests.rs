@@ -311,10 +311,7 @@ fn test_parse_end_two() {
 
 #[test]
 fn test_parse_text_quotation_marks() {
-    SETUP_READER!(
-        reader,
-        r#""What!""#
-    );
+    SETUP_READER!(reader, r#""What!""#);
 
     assert_eq!(reader.lines[0].text, r#""What!""#);
 
@@ -323,10 +320,7 @@ fn test_parse_text_quotation_marks() {
 
 #[test]
 fn test_parse_text_apostrophe() {
-    SETUP_READER!(
-        reader,
-        r#"'What!'"#
-    );
+    SETUP_READER!(reader, r#"'What!'"#);
 
     assert_eq!(reader.lines[0].text, r#"'What!'"#);
 
@@ -335,10 +329,7 @@ fn test_parse_text_apostrophe() {
 
 #[test]
 fn test_parse_text_dots() {
-    SETUP_READER!(
-        reader,
-        r#"..."#
-    );
+    SETUP_READER!(reader, r#"..."#);
 
     assert_eq!(reader.lines[0].text, r#"..."#);
 
@@ -347,10 +338,7 @@ fn test_parse_text_dots() {
 
 #[test]
 fn test_parse_text_dash() {
-    SETUP_READER!(
-        reader,
-        r#"-----"#
-    );
+    SETUP_READER!(reader, r#"-----"#);
 
     assert_eq!(reader.lines[0].text, r#"-----"#);
 

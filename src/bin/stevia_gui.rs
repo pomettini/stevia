@@ -83,9 +83,7 @@ fn main() {
                     // Show generate button only if file is loaded
                     generate_button.show(&ui);
                 }
-                None => {
-                    
-                }
+                None => {}
             };
         }
     });
